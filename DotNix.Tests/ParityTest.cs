@@ -12,6 +12,9 @@ public class ParityTest
     [TestMethod]
     [DataRow("3")]
     [DataRow("7")]
+    [DataRow("1 + 2")]
+    [DataRow("4 + 13")]
+    [DataRow("4 - 2")]
     public async Task EvalExpr(string code)
     {
         // Arrange
