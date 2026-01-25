@@ -42,9 +42,11 @@ public static class Nix
         ];
 
         var integerExpr = nixTokenParser.Integer.Map(x => NixExpr.Literal(NixValue.Integer(x)));
+        var literal = integerExpr;
         
         Parser<NixExpr> expr = null!;
-        var term = integerExpr;
+        // ReSharper disable once AccessToModifiedClosure
+        var term = either(nixTokenParser.Parens(lazyp(() => expr)), literal);
         expr = Expr.buildExpressionParser(table, term);
 
         return expr;
