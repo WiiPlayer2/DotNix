@@ -1,9 +1,0 @@
-$namespace = "DotNix";
-$start = "Expr";
-
-Whitespace = ? 0x20 ?;
-InfixOp = ? 0x2B ?;
-InfixExpr = Expr, [ Whitespace ], InfixOp, [ Whitespace ], Expr;
-Digit = ? /[0-9]/ ?;
-Integer = Digit, { Digit };
-Expr = InfixExpr | Integer;
