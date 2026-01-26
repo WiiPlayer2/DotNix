@@ -29,4 +29,10 @@
       <ProjectReference Include="..\DotNix\DotNix.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="tests\**\*">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

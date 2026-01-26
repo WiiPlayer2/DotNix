@@ -31,6 +31,25 @@ public class ParityTest
         result.Should().BeEquivalentTo(expected);
     }
 
+    [TestMethod]
+    [DataRow("01-calc.nix")]
+    public async Task EvalFile(string file)
+    {
+        // Arrange
+        var filePath = Path.GetFullPath($"./tests/{file}");
+        var cliResult = await Cli.Wrap("nix")
+            .WithArguments(["eval", "--json", "--file", filePath])
+            .ExecuteBufferedAsync();
+        var expected = JsonConvert.DeserializeObject(cliResult.StandardOutput);
+
+        // Act
+        var fileContent = await File.ReadAllTextAsync(filePath);
+        var result = ToJson(await Nix.EvalExpr(fileContent));
+
+        // Assert
+        result.Should().BeEquivalentTo(expected);
+    }
+
     private static object? ToJson(NixValue value)
     {
         return JsonConvert.DeserializeObject(JsonConvert.SerializeObject(ToIntermediateValue(value)));
