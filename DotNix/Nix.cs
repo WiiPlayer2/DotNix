@@ -16,22 +16,22 @@ public static class Nix
     }
 
     private static Task<NixExpr> Evaluate(NixExpr expr) => expr.Match<Task<NixExpr>>(
-        addOp: op =>
+        binaryOp: op =>
             from left in EvaluateToValue(op.Left)
             from right in EvaluateToValue(op.Right)
-            select left.Match(
-                integer: a => right.Match(
-                    integer: b =>  NixExpr.Literal(NixValue.Integer(a.Value + b.Value))
-                )
-            ),
-        subOp: op =>
-            from left in EvaluateToValue(op.Left)
-            from right in EvaluateToValue(op.Right)
-            select left.Match(
-                integer: a => right.Match(
-                    integer: b =>  NixExpr.Literal(NixValue.Integer(a.Value - b.Value))
-                )
-            ),
+            select op.Operator.Operator switch
+            {
+                BinaryOperator.Add => left.Match(
+                    integer: a => right.Match(
+                        integer: b =>  NixExpr.Literal(op.Span, NixValue.Integer(a.Value + b.Value))
+                    )
+                ),
+                BinaryOperator.Sub => left.Match(
+                    integer: a => right.Match(
+                        integer: b =>  NixExpr.Literal(op.Span, NixValue.Integer(a.Value - b.Value))
+                    )
+                ),
+            },
         literal: _ => Task.FromResult(expr)
     );
 

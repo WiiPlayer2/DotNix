@@ -6,24 +6,24 @@ public partial class NixParser
 {
     private static class Operators
     {
-        private static Operator<PNixExpr> Binary(Assoc assoc, string op, Func<NixExpr, NixExpr, NixExpr> fn)
+        private static Operator<NixExpr> Binary(Assoc assoc, string op, BinaryOperator @operator)
         {
             return Operator.Infix(
                 assoc,
-                TokenParser.ReservedOp(op).Map(_ => new Func<PNixExpr, PNixExpr, PNixExpr>(Op))
+                TokenParser.ReservedOp(op).Map(x => Op(x.ToPosSpan().Item2))
             );
 
-            PNixExpr Op(PNixExpr left, PNixExpr right) =>
-                (fn(left.Expr, right.Expr), left.BeginPos, right.EndPos, left.BeginIndex, right.EndIndex);
+            Func<NixExpr, NixExpr, NixExpr> Op(PosSpan opSpan) => (left, right) =>
+                NixExpr.BinaryOp(new BinaryOperatorSymbol(opSpan, @operator), left, right);
         }
 
-        public static Operator<PNixExpr>[][] Table => field ??=
+        public static Operator<NixExpr>[][] Table => field ??=
         [
             [Add, Sub],
         ];
         
-        public static Operator<PNixExpr> Add => field ??= Binary(Assoc.Left, "+", NixExpr.AddOp);
+        public static Operator<NixExpr> Add => field ??= Binary(Assoc.Left, "+", BinaryOperator.Add);
         
-        public static Operator<PNixExpr> Sub => field ??= Binary(Assoc.Left, "-", NixExpr.SubOp);
+        public static Operator<NixExpr> Sub => field ??= Binary(Assoc.Left, "-", BinaryOperator.Sub);
     }
 }

@@ -4,9 +4,9 @@ public partial class NixParser
 {
     private static class Literals
     {
-        public static Parser<PNixExpr> Any => field ??= Integer;
+        public static Parser<NixExpr> Any => field ??= Integer;
         
-        private static Parser<PNixExpr> Integer => TokenParser.Integer
-            .Map(x => (NixExpr.Literal(NixValue.Integer(x.Value)), x.BeginPos, x.EndPos, x.BeginIndex, x.EndIndex));
+        private static Parser<NixExpr> Integer => TokenParser.Integer
+            .Map(x => NixExpr.Literal(x.ToPosSpan().Item2, NixValue.Integer(x.Value)));
     }
 }

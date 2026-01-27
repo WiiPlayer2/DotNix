@@ -11,13 +11,13 @@ public static partial class NixParser
         var result = parse(Expression, code);
         return result.IsFaulted
             ? throw new Exception(result.Reply.Error?.ToString())
-            : result.Reply.Result.Item1;
+            : result.Reply.Result!;
     }
 
-    private static Parser<PNixExpr> Expression => field ??=
+    private static Parser<NixExpr> Expression => field ??=
         Expr.buildExpressionParser(
             Operators.Table,
-            either(TokenParser.Parens(lazyp(() => Expression)), Literals.Any));
+            either(TokenParser.Parens(lazyp(() => Expression).Map(x => x.ToPNixExpr())), Literals.Any.Map(x => x.ToPNixExpr())).Map(x => x.Item1));
 
     private static GenLanguageDef Language => field ??= GenLanguageDef.Empty.With(
         ReservedOpNames: ["+", "-"]
