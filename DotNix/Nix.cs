@@ -1,4 +1,5 @@
-﻿using LanguageExt;
+﻿using DotNix.Parsing;
+using LanguageExt;
 using LanguageExt.Parsec;
 using static LanguageExt.Prelude;
 using static LanguageExt.Parsec.Prim;
@@ -9,47 +10,9 @@ public static class Nix
 {
     public static async Task<NixValue> EvalExpr(string code)
     {
-        var parser = CreateParser();
-        var result = parse(parser, code);
-        if (result.IsFaulted)
-            throw new Exception(result.Reply.Error?.ToString());
-
-        var value = await EvaluateToValue(result.Reply.Result!);
+        var expr = NixParser.Parse(code);
+        var value = await EvaluateToValue(expr);
         return value;
-    }
-
-    private static Parser<NixExpr> CreateParser()
-    {
-        var nixLanguageDef = GenLanguageDef.Empty.With(
-            ReservedOpNames: ["+", "-"]
-        );
-        
-        var nixTokenParser = Token.makeTokenParser(nixLanguageDef);
-
-        var addOp = Operator.Infix<NixExpr>(
-            Assoc.Left,
-            from _10 in nixTokenParser.ReservedOp("+")
-            select new Func<NixExpr, NixExpr, NixExpr>(NixExpr.AddOp)
-        );
-        var subOp = Operator.Infix<NixExpr>(
-            Assoc.Left,
-            from _10 in nixTokenParser.ReservedOp("-")
-            select new Func<NixExpr, NixExpr, NixExpr>(NixExpr.SubOp)
-        );
-
-        Operator<NixExpr>[][] table = [
-            [ addOp, subOp ],
-        ];
-
-        var integerExpr = nixTokenParser.Integer.Map(x => NixExpr.Literal(NixValue.Integer(x)));
-        var literal = integerExpr;
-        
-        Parser<NixExpr> expr = null!;
-        // ReSharper disable once AccessToModifiedClosure
-        var term = either(nixTokenParser.Parens(lazyp(() => expr)), literal);
-        expr = Expr.buildExpressionParser(table, term);
-
-        return expr;
     }
 
     private static Task<NixExpr> Evaluate(NixExpr expr) => expr.Match<Task<NixExpr>>(
