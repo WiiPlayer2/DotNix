@@ -14,14 +14,19 @@ public static partial class NixParser
             : result.Reply.Result!;
     }
 
-    private static Parser<NixExpr> Expression => field ??=
+    public static Parser<NixExpr> Term => field ??=
+        either(TokenParser.Parens(lazyp(() => Expression)), Literals.Any);
+    
+    public static Parser<NixExpr> Expression => field ??=
         Expr.buildExpressionParser(
             Operators.Table,
-            either(TokenParser.Parens(lazyp(() => Expression).Map(x => x.ToPNixExpr())), Literals.Any.Map(x => x.ToPNixExpr())).Map(x => x.Item1));
+            Term);
 
-    private static GenLanguageDef Language => field ??= GenLanguageDef.Empty.With(
+    public static GenLanguageDef Language => field ??= GenLanguageDef.Empty.With(
         ReservedOpNames: ["+", "-"]
+        // OpStart: oneOf("+-"),
+        // OpLetter: oneOf("+-")
     );
 
-    private static GenTokenParser2 TokenParser => field ??= Token2.makeTokenParser(Language);
+    public static GenTokenParser TokenParser => field ??= Token.makeTokenParser(Language);
 }

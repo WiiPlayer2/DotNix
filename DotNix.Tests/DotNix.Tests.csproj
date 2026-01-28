@@ -11,6 +11,7 @@
 
     <ItemGroup>
         <PackageReference Include="AwesomeAssertions" Version="9.2.0" />
+        <PackageReference Include="AwesomeAssertions.Json" Version="9.0.0" />
         <PackageReference Include="CliWrap" Version="3.9.0" />
         <PackageReference Include="coverlet.collector" Version="6.0.4">
           <PrivateAssets>all</PrivateAssets>

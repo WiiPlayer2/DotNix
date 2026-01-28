@@ -11,11 +11,7 @@ public class NixCompiler
         list: Compile
     );
 
-    private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value.Match(
-        integer: Compile
-    );
-
-    private static NixInteger Compile(NixValue.Integer_ integer) => new(integer.Value);
+    private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value;
 
     private static NixThunk Compile(NixExpr.BinaryOp_ binaryOp)
     {
@@ -24,7 +20,9 @@ public class NixCompiler
         return binaryOp.Operator.Operator switch
         {
             BinaryOperator.Plus => Op(Operators.Plus),
-            BinaryOperator.Minus => Op(Operators.Minus),  
+            BinaryOperator.Minus => Op(Operators.Minus),
+            BinaryOperator.Mul => Op(Operators.Mul),
+            BinaryOperator.Div => Op(Operators.Div),
         };
 
         NixThunk Op(Func<NixValue2, NixValue2, NixValue2> fn) => new(

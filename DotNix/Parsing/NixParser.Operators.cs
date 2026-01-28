@@ -4,13 +4,15 @@ namespace DotNix.Parsing;
 
 public partial class NixParser
 {
-    private static class Operators
+    public static class Operators
     {
         private static Operator<NixExpr> Binary(Assoc assoc, string op, BinaryOperator @operator)
         {
             return Operator.Infix(
                 assoc,
-                TokenParser.ReservedOp(op).Map(x => Op(x.ToPosSpan().Item2))
+                from beginPos in attempt(from pos in getPos from _ in TokenParser.ReservedOp(op) select pos)
+                from endPos in getPos
+                select Op(new PosSpan(beginPos, endPos))
             );
 
             Func<NixExpr, NixExpr, NixExpr> Op(PosSpan opSpan) => (left, right) =>
@@ -19,11 +21,16 @@ public partial class NixParser
 
         public static Operator<NixExpr>[][] Table => field ??=
         [
+            [Mul, Div],
             [Add, Sub],
         ];
         
         public static Operator<NixExpr> Add => field ??= Binary(Assoc.Left, "+", BinaryOperator.Plus);
         
         public static Operator<NixExpr> Sub => field ??= Binary(Assoc.Left, "-", BinaryOperator.Minus);
+        
+        public static Operator<NixExpr> Mul => field ??= Binary(Assoc.Left, "*", BinaryOperator.Mul);
+        
+        public static Operator<NixExpr> Div => field ??= Binary(Assoc.Left, "/", BinaryOperator.Div);
     }
 }

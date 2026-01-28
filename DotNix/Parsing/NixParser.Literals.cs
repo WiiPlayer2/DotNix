@@ -1,21 +1,36 @@
+using DotNix.Compiling;
+using LanguageExt.Traits;
 using Char = LanguageExt.Parsec.Char;
 
 namespace DotNix.Parsing;
 
 public partial class NixParser
 {
-    private static class Literals
+    public static class Literals
     {
-        public static Parser<NixExpr> Any => field ??= choice(Integer, List);
-        
-        private static Parser<NixExpr> Integer => TokenParser.Integer
-            .Map(x => NixExpr.Literal(x.ToPosSpan().Item2, NixValue.Integer(x.Value)));
+        public static Parser<NixExpr> Any => field ??= choice(
+            Number,
+            List
+        );
 
-        private static Parser<NixExpr> List =>
-            from start in TokenParser.Lexeme(Char.ch('[')).ToPosSpan()
-            from exprs in TokenParser.SepBy<NixExpr, Unit>(Expression.Map(x => x.ToPNixExpr()), TokenParser.WhiteSpace)
-                .ToPosSpan()
-            from end in TokenParser.Lexeme(Char.ch(']')).ToPosSpan()
-            select NixExpr.List(start.Span | exprs.Span | end.Span, exprs.Value.ToLst());
+        public static Parser<NixExpr> Number => field ??=
+            attempt(
+                from beginPos in getPos
+                from either in TokenParser.NaturalOrFloat
+                from endPos in getPos
+                let value = either.Match<NixNumber>(
+                    i => new NixInteger(i),
+                    f => new NixFloat(f)
+                )
+                select NixExpr.Literal(new PosSpan(beginPos, endPos), value)
+            );
+
+        public static Parser<NixExpr> List => field ??=
+        (
+            from beginPos in TokenParser.Lexeme(attempt(from pos in getPos from _ in ch('[') select pos))
+            from exprs in manyUntil(Term, ch(']'))
+            from endPos in getPos
+            select NixExpr.List(new PosSpan(beginPos, endPos), exprs.ToLst())
+        ).label<NixExpr>("list");
     }
 }

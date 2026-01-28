@@ -1,9 +1,16 @@
 
-using AwesomeAssertions;
+using System.Linq.Expressions;
+using AwesomeAssertions.Json;
 using CliWrap;
 using CliWrap.Buffered;
 using DotNix.Compiling;
+using DotNix.Parsing;
+using LanguageExt;
+using LanguageExt.Parsec;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Char = LanguageExt.Parsec.Char;
+using static LanguageExt.Parsec.Prim;
 
 namespace DotNix.Tests;
 
@@ -23,7 +30,7 @@ public class ParityTest
         var cliResult = await Cli.Wrap("nix")
             .WithArguments(["eval", "--json", "--expr", code])
             .ExecuteBufferedAsync();
-        var expected = JsonConvert.DeserializeObject(cliResult.StandardOutput);
+        var expected = JsonConvert.DeserializeObject<JToken?>(cliResult.StandardOutput);
 
         // Act
         var result = ToJson(await Nix.EvalExpr(code));
@@ -35,6 +42,7 @@ public class ParityTest
     [TestMethod]
     [DataRow("01-calc.nix")]
     [DataRow("02-list.nix")]
+    [DataRow("03-arithmetic.nix")]
     public async Task EvalFile(string file)
     {
         // Arrange
@@ -42,7 +50,7 @@ public class ParityTest
         var cliResult = await Cli.Wrap("nix")
             .WithArguments(["eval", "--json", "--file", filePath])
             .ExecuteBufferedAsync();
-        var expected = JsonConvert.DeserializeObject(cliResult.StandardOutput);
+        var expected = JsonConvert.DeserializeObject<JToken?>(cliResult.StandardOutput);
 
         // Act
         var fileContent = await File.ReadAllTextAsync(filePath);
@@ -52,23 +60,15 @@ public class ParityTest
         result.Should().BeEquivalentTo(expected);
     }
 
-    private static object? ToJson(NixValue value)
+    private static JToken? ToJson(NixValue2 value)
     {
-        return JsonConvert.DeserializeObject(JsonConvert.SerializeObject(ToIntermediateValue(value)));
-        
-        static object ToIntermediateValue(NixValue value) => value.Match<object>(
-            integer => integer.Value
-        );
-    }
-
-    private static object? ToJson(NixValue2 value)
-    {
-        return JsonConvert.DeserializeObject(JsonConvert.SerializeObject(ToIntermediateValue(value)));
+        return JsonConvert.DeserializeObject<JToken?>(JsonConvert.SerializeObject(ToIntermediateValue(value)));
 
         static object ToIntermediateValue(NixValue2 value) => value switch
         {
             NixInteger integer => integer.Value,
             NixList list => list.Items.Select(ToIntermediateValue),
+            NixFloat @float => @float.Value, 
         };
     }
 }

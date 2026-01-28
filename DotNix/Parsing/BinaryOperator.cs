@@ -6,6 +6,6 @@ public enum BinaryOperator
 {
     Plus,
     Minus,
-    // Mul,
-    // Div,
+    Mul,
+    Div,
 }
