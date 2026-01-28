@@ -1,3 +1,4 @@
+global using LanguageExt;
 global using LanguageExt.Parsec;
 global using static LanguageExt.Parsec.Prim;
 global using PNixExpr = (

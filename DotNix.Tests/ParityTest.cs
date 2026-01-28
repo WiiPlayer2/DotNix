@@ -34,6 +34,7 @@ public class ParityTest
 
     [TestMethod]
     [DataRow("01-calc.nix")]
+    [DataRow("02-list.nix")]
     public async Task EvalFile(string file)
     {
         // Arrange
@@ -67,6 +68,7 @@ public class ParityTest
         static object ToIntermediateValue(NixValue2 value) => value switch
         {
             NixInteger integer => integer.Value,
+            NixList list => list.Items.Select(ToIntermediateValue),
         };
     }
 }

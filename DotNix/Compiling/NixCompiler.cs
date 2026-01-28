@@ -7,7 +7,8 @@ public class NixCompiler
 {
     public static NixValue2 Compile(NixExpr expr) => expr.Match(
         binaryOp: Compile,
-        literal: Compile
+        literal: Compile,
+        list: Compile
     );
 
     private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value.Match(
@@ -30,4 +31,6 @@ public class NixCompiler
             new(async () => fn(await aValue.Strict, await bValue.Strict)
         ));
     }
+
+    private static NixList Compile(NixExpr.List_ list) => new(list.Items.Select(Compile).ToList());
 }
