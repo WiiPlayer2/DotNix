@@ -39,10 +39,8 @@ public class ParityTest
         result.Should().BeEquivalentTo(expected);
     }
 
-    [TestMethod]
-    [DataRow("01-calc.nix")]
-    [DataRow("02-list.nix")]
-    [DataRow("03-arithmetic.nix")]
+    [DataTestMethod]
+    [DynamicData(nameof(TestFiles))]
     public async Task EvalFile(string file)
     {
         // Arrange
@@ -59,6 +57,10 @@ public class ParityTest
         // Assert
         result.Should().BeEquivalentTo(expected);
     }
+
+    public static IEnumerable<object[]> TestFiles =>
+        Directory.EnumerateFiles("./tests")
+            .Select(x => new object[] { new FileInfo(x).Name });
 
     private static JToken? ToJson(NixValue2 value)
     {
