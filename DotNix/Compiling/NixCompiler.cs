@@ -8,7 +8,8 @@ public class NixCompiler
     public static NixValue2 Compile(NixExpr expr) => expr.Match(
         binaryOp: Compile,
         literal: Compile,
-        list: Compile
+        list: Compile,
+        attrs: Compile
     );
 
     private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value;
@@ -31,4 +32,13 @@ public class NixCompiler
     }
 
     private static NixList Compile(NixExpr.List_ list) => new(list.Items.Select(Compile).ToList());
+
+    private static NixAttrs Compile(NixExpr.Attrs_ attrs) => new(
+        attrs.Statements
+            .Select(x => x.Match(
+                assign: assign =>
+                    new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Compile(assign.Expression))
+            ))
+            .ToDictionary()
+    );
 }

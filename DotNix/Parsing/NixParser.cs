@@ -1,6 +1,7 @@
 using LanguageExt;
 using LanguageExt.Parsec;
 using static LanguageExt.Parsec.Prim;
+using Char = LanguageExt.Parsec.Char;
 
 namespace DotNix.Parsing;
 
@@ -23,9 +24,9 @@ public static partial class NixParser
             Term);
 
     public static GenLanguageDef Language => field ??= GenLanguageDef.Empty.With(
-        ReservedOpNames: ["+", "-"]
-        // OpStart: oneOf("+-"),
-        // OpLetter: oneOf("+-")
+        ReservedOpNames: ["+", "-"],
+        IdentLetter: choice(alphaNum, oneOf("-_")),
+        IdentStart: choice(letter, ch('_'))
     );
 
     public static GenTokenParser TokenParser => field ??= Token.makeTokenParser(Language);

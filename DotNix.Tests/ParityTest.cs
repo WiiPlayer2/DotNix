@@ -70,7 +70,10 @@ public class ParityTest
         {
             NixInteger integer => integer.Value,
             NixList list => list.Items.Select(ToIntermediateValue),
-            NixFloat @float => @float.Value, 
+            NixFloat @float => @float.Value,
+            NixAttrs attrs => attrs.Items
+                .Select(kv => new KeyValuePair<string,object>(kv.Key, ToIntermediateValue(kv.Value)))
+                .ToDictionary(),
         };
     }
 }
