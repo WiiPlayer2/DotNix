@@ -4,8 +4,8 @@ namespace DotNix.Parsing;
 
 public enum BinaryOperator
 {
-    Add,
-    Sub,
+    Plus,
+    Minus,
     // Mul,
     // Div,
 }

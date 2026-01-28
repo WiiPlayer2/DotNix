@@ -22,10 +22,12 @@ public class NixCompiler
         var bValue = Compile(binaryOp.Right);
         return binaryOp.Operator.Operator switch
         {
-            BinaryOperator.Add =>
-                new NixThunk(new(async Task<NixValue2> () => Builtins.Add((NixInteger)(await aValue.Strict), (NixInteger)(await bValue.Strict)))),
-            BinaryOperator.Sub =>
-                new NixThunk(new(async Task<NixValue2> () => Builtins.Sub((NixInteger)(await aValue.Strict), (NixInteger)(await bValue.Strict)))),  
+            BinaryOperator.Plus => Op(Operators.Plus),
+            BinaryOperator.Minus => Op(Operators.Minus),  
         };
+
+        NixThunk Op(Func<NixValue2, NixValue2, NixValue2> fn) => new(
+            new(async () => fn(await aValue.Strict, await bValue.Strict)
+        ));
     }
 }

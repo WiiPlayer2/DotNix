@@ -22,8 +22,8 @@ public partial class NixParser
             [Add, Sub],
         ];
         
-        public static Operator<NixExpr> Add => field ??= Binary(Assoc.Left, "+", BinaryOperator.Add);
+        public static Operator<NixExpr> Add => field ??= Binary(Assoc.Left, "+", BinaryOperator.Plus);
         
-        public static Operator<NixExpr> Sub => field ??= Binary(Assoc.Left, "-", BinaryOperator.Sub);
+        public static Operator<NixExpr> Sub => field ??= Binary(Assoc.Left, "-", BinaryOperator.Minus);
     }
 }
