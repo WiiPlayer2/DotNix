@@ -2,6 +2,7 @@
 using AwesomeAssertions;
 using CliWrap;
 using CliWrap.Buffered;
+using DotNix.Compiling;
 using Newtonsoft.Json;
 
 namespace DotNix.Tests;
@@ -57,5 +58,15 @@ public class ParityTest
         static object ToIntermediateValue(NixValue value) => value.Match<object>(
             integer => integer.Value
         );
+    }
+
+    private static object? ToJson(NixValue2 value)
+    {
+        return JsonConvert.DeserializeObject(JsonConvert.SerializeObject(ToIntermediateValue(value)));
+
+        static object ToIntermediateValue(NixValue2 value) => value switch
+        {
+            NixInteger integer => integer.Value,
+        };
     }
 }
