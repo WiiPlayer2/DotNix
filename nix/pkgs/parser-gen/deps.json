@@ -5,19 +5,24 @@
     "hash": "sha256-Sied9BSAq7js69nOCd4xeOe3x9x0DdPmCBbRuzI+WMo="
   },
   {
+    "pname": "LanguageExt.Core",
+    "version": "5.0.0-beta-77",
+    "hash": "sha256-2KhWvTg+mK5tbKhBf7lJAF383mXKMXJcjhqXv0hDJyQ="
+  },
+  {
     "pname": "Microsoft.CodeAnalysis.Analyzers",
-    "version": "3.3.4",
-    "hash": "sha256-qDzTfZBSCvAUu9gzq2k+LOvh6/eRvJ9++VCNck/ZpnE="
+    "version": "3.11.0",
+    "hash": "sha256-hQ2l6E6PO4m7i+ZsfFlEx+93UsLPo4IY3wDkNG11/Sw="
   },
   {
     "pname": "Microsoft.CodeAnalysis.Common",
-    "version": "4.11.0",
-    "hash": "sha256-cX/xgM0VmS+Bsu63KZk2ofjFOOy1mzI+CCVEY6kI+Qk="
+    "version": "5.0.0",
+    "hash": "sha256-g4ALvBSNyHEmSb1l5TFtWW7zEkiRmhqLx4XWZu9sr2U="
   },
   {
     "pname": "Microsoft.CodeAnalysis.CSharp",
-    "version": "4.11.0",
-    "hash": "sha256-E9jEOjp9g/CFecsc5/QfRKOPXMRpSw0Tf79XsRgL+Mk="
+    "version": "5.0.0",
+    "hash": "sha256-ctBCkQGFpH/xT5rRE3xibu9YxPD108RuC4a4Z25koG8="
   },
   {
     "pname": "System.CommandLine",

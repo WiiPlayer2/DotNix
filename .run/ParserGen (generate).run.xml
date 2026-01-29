@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="ParserGen (generate)" type="DotNetProject" factoryName=".NET Project">
     <option name="EXE_PATH" value="$PROJECT_DIR$/Tools/ParserGen/bin/Debug/net10.0/parser-gen" />
-    <option name="PROGRAM_PARAMETERS" value="generate /nix/store/21vkwapcdjnrlg31mxp8wzalz7rrqxwz-grammar.json out.cs" />
+    <option name="PROGRAM_PARAMETERS" value="generate /nix/store/21vkwapcdjnrlg31mxp8wzalz7rrqxwz-grammar.json ../../../../../DotNix/Parsing/TreeSitter.g.cs" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Tools/ParserGen/bin/Debug/net10.0" />
     <option name="PASS_PARENT_ENVS" value="1" />
     <option name="ENV_FILE_PATHS" value="" />
