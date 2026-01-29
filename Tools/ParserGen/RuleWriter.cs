@@ -14,7 +14,7 @@ internal class RuleWriter(IndentedTextWriter writer)
             immediate = true;
         
         if (!immediate)
-            await writer.WriteAsync("lexeme(");
+            await writer.WriteAsync("LEXEME(");
         
         await rule.Match(
             WriteAliasRule,
@@ -46,7 +46,7 @@ internal class RuleWriter(IndentedTextWriter writer)
             var first = true;
             foreach (var member in seqRule.Members)
             {
-                await WriteRule(member, first);
+                await WriteRule(member, true);
                 await writer.WriteLineAsync(",");
                 first = false;
             }

@@ -23,343 +23,341 @@ internal static partial class TreeSitter
     };
 }
     
-    public static Parser<A> lexeme<A>(Parser<A> p) => from _ in optional(Rules.WHITESPACE) from result in p select result;
-    
-    public static partial class Rules
+    public abstract partial class Rules
     {
-        public static Parser<object?> source_code => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> source_code => field ??=
+            choice((Parser<object?>[])[
                 attempt((lazyp(() => _expression)).label("expression")),
                 attempt(eof.Map(x => (object?)x)),
-            ]));
+            ]);
         
-        public static Parser<object?> _expression => field ??=
-            attempt(lazyp(() => _expr_function_expression));
+        public virtual Parser<object?> _expression => field ??=
+            lazyp(() => _expr_function_expression);
         
-        public static Parser<object?> keyword => field ??=
-            attempt(regex("if|then|else|let|inherit|in|rec|with|assert").Map(x => (object?)x));
+        public virtual Parser<object?> keyword => field ??=
+            regex("if|then|else|let|inherit|in|rec|with|assert").Map(x => (object?)x);
         
-        public static Parser<object?> identifier => field ??=
-            attempt(regex("[a-zA-Z_][a-zA-Z0-9_\\'\\-]*").Map(x => (object?)x));
+        public virtual Parser<object?> identifier => field ??=
+            regex("[a-zA-Z_][a-zA-Z0-9_\\'\\-]*").Map(x => (object?)x);
         
-        public static Parser<object?> variable_expression => field ??=
-            attempt((lazyp(() => identifier)).label("name"));
+        public virtual Parser<object?> variable_expression => field ??=
+            (lazyp(() => identifier)).label("name");
         
-        public static Parser<object?> integer_expression => field ??=
-            attempt(regex("[0-9]+").Map(x => (object?)x));
+        public virtual Parser<object?> integer_expression => field ??=
+            regex("[0-9]+").Map(x => (object?)x);
         
-        public static Parser<object?> float_expression => field ??=
-            attempt(regex("(([1-9][0-9]*\\.[0-9]*)|(0?\\.[0-9]+))([Ee][+-]?[0-9]+)?").Map(x => (object?)x));
+        public virtual Parser<object?> float_expression => field ??=
+            regex("(([1-9][0-9]*\\.[0-9]*)|(0?\\.[0-9]+))([Ee][+-]?[0-9]+)?").Map(x => (object?)x);
         
-        public static Parser<object?> path_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> path_expression => field ??=
+            chain((Parser<object?>[])[
                 (lazyp(() => _path_start)).label("path_fragment"),
-                lexeme(many(lexeme(choice((Parser<object?>[])[
+                many(LEXEME(choice((Parser<object?>[])[
                     attempt(lazyp(() => path_fragment)),
                     attempt((lazyp(() => _immediate_interpolation)).label("interpolation")),
-                ]))).Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                ]))).Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> _hpath_start => field ??=
-            attempt(regex("\\~\\/[a-zA-Z0-9\\._\\-\\+\\/]+").Map(x => (object?)x));
+        public virtual Parser<object?> _hpath_start => field ??=
+            regex("\\~\\/[a-zA-Z0-9\\._\\-\\+\\/]+").Map(x => (object?)x);
         
-        public static Parser<object?> hpath_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> hpath_expression => field ??=
+            chain((Parser<object?>[])[
                 (lazyp(() => _hpath_start)).label("path_fragment"),
-                lexeme(many(lexeme(choice((Parser<object?>[])[
+                many(LEXEME(choice((Parser<object?>[])[
                     attempt(lazyp(() => path_fragment)),
                     attempt((lazyp(() => _immediate_interpolation)).label("interpolation")),
-                ]))).Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                ]))).Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> spath_expression => field ??=
-            attempt(regex("<[a-zA-Z0-9\\._\\-\\+]+(\\/[a-zA-Z0-9\\._\\-\\+]+)*>").Map(x => (object?)x));
+        public virtual Parser<object?> spath_expression => field ??=
+            regex("<[a-zA-Z0-9\\._\\-\\+]+(\\/[a-zA-Z0-9\\._\\-\\+]+)*>").Map(x => (object?)x);
         
-        public static Parser<object?> uri_expression => field ??=
-            attempt(regex("[a-zA-Z][a-zA-Z0-9\\+\\-\\.]*:[a-zA-Z0-9%\\/\\?:@\\&=\\+\\$,\\-_\\.\\!\\~\\*\\']+").Map(x => (object?)x));
+        public virtual Parser<object?> uri_expression => field ??=
+            regex("[a-zA-Z][a-zA-Z0-9\\+\\-\\.]*:[a-zA-Z0-9%\\/\\?:@\\&=\\+\\$,\\-_\\.\\!\\~\\*\\']+").Map(x => (object?)x);
         
-        public static Parser<object?> _expr_function_expression => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> _expr_function_expression => field ??=
+            choice((Parser<object?>[])[
                 attempt(lazyp(() => function_expression)),
                 attempt(lazyp(() => assert_expression)),
                 attempt(lazyp(() => with_expression)),
                 attempt(lazyp(() => let_expression)),
                 attempt(lazyp(() => _expr_if)),
-            ]));
+            ]);
         
-        public static Parser<object?> function_expression => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> function_expression => field ??=
+            choice((Parser<object?>[])[
                 attempt(chain((Parser<object?>[])[
                     (lazyp(() => identifier)).label("universal"),
-                    lexeme(str(":").Map(x => (object?)x)),
-                    lexeme((lazyp(() => _expr_function_expression)).label("body")),
+                    str(":").Map(x => (object?)x),
+                    (lazyp(() => _expr_function_expression)).label("body"),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     (lazyp(() => formals)).label("formals"),
-                    lexeme(str(":").Map(x => (object?)x)),
-                    lexeme((lazyp(() => _expr_function_expression)).label("body")),
+                    str(":").Map(x => (object?)x),
+                    (lazyp(() => _expr_function_expression)).label("body"),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     (lazyp(() => formals)).label("formals"),
-                    lexeme(str("@").Map(x => (object?)x)),
-                    lexeme((lazyp(() => identifier)).label("universal")),
-                    lexeme(str(":").Map(x => (object?)x)),
-                    lexeme((lazyp(() => _expr_function_expression)).label("body")),
+                    str("@").Map(x => (object?)x),
+                    (lazyp(() => identifier)).label("universal"),
+                    str(":").Map(x => (object?)x),
+                    (lazyp(() => _expr_function_expression)).label("body"),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     (lazyp(() => identifier)).label("universal"),
-                    lexeme(str("@").Map(x => (object?)x)),
-                    lexeme((lazyp(() => formals)).label("formals")),
-                    lexeme(str(":").Map(x => (object?)x)),
-                    lexeme((lazyp(() => _expr_function_expression)).label("body")),
+                    str("@").Map(x => (object?)x),
+                    (lazyp(() => formals)).label("formals"),
+                    str(":").Map(x => (object?)x),
+                    (lazyp(() => _expr_function_expression)).label("body"),
                 ]).Map(x => (object?)x)),
-            ]));
+            ]);
         
-        public static Parser<object?> formals => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> formals => field ??=
+            choice((Parser<object?>[])[
                 attempt(chain((Parser<object?>[])[
                     str("{").Map(x => (object?)x),
-                    lexeme(str("}").Map(x => (object?)x)),
+                    str("}").Map(x => (object?)x),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     str("{").Map(x => (object?)x),
-                    lexeme(chain((Parser<object?>[])[
+                    chain((Parser<object?>[])[
                         (lazyp(() => formal)).label("formal"),
-                        lexeme(many(lexeme(chain((Parser<object?>[])[
+                        many(LEXEME(chain((Parser<object?>[])[
                             str(",").Map(x => (object?)x),
-                            lexeme((lazyp(() => formal)).label("formal")),
-                        ]).Map(x => (object?)x))).Map(x => (object?)x)),
-                    ]).Map(x => (object?)x)),
-                    lexeme(str("}").Map(x => (object?)x)),
+                            (lazyp(() => formal)).label("formal"),
+                        ]).Map(x => (object?)x))).Map(x => (object?)x),
+                    ]).Map(x => (object?)x),
+                    str("}").Map(x => (object?)x),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     str("{").Map(x => (object?)x),
-                    lexeme(chain((Parser<object?>[])[
+                    chain((Parser<object?>[])[
                         (lazyp(() => formal)).label("formal"),
-                        lexeme(many(lexeme(chain((Parser<object?>[])[
+                        many(LEXEME(chain((Parser<object?>[])[
                             str(",").Map(x => (object?)x),
-                            lexeme((lazyp(() => formal)).label("formal")),
-                        ]).Map(x => (object?)x))).Map(x => (object?)x)),
-                    ]).Map(x => (object?)x)),
-                    lexeme(choice((Parser<object?>[])[
+                            (lazyp(() => formal)).label("formal"),
+                        ]).Map(x => (object?)x))).Map(x => (object?)x),
+                    ]).Map(x => (object?)x),
+                    choice((Parser<object?>[])[
                         attempt(chain((Parser<object?>[])[
                             str(",").Map(x => (object?)x),
-                            lexeme(choice((Parser<object?>[])[
+                            choice((Parser<object?>[])[
                                 attempt((lazyp(() => ellipses)).label("ellipses")),
                                 attempt(eof.Map(x => (object?)x)),
-                            ])),
+                            ]),
                         ]).Map(x => (object?)x)),
                         attempt(eof.Map(x => (object?)x)),
-                    ])),
-                    lexeme(str("}").Map(x => (object?)x)),
+                    ]),
+                    str("}").Map(x => (object?)x),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     str("{").Map(x => (object?)x),
-                    lexeme((lazyp(() => ellipses)).label("ellipses")),
-                    lexeme(str("}").Map(x => (object?)x)),
+                    (lazyp(() => ellipses)).label("ellipses"),
+                    str("}").Map(x => (object?)x),
                 ]).Map(x => (object?)x)),
-            ]));
+            ]);
         
-        public static Parser<object?> formal => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> formal => field ??=
+            chain((Parser<object?>[])[
                 (lazyp(() => identifier)).label("name"),
-                lexeme(choice((Parser<object?>[])[
+                choice((Parser<object?>[])[
                     attempt(chain((Parser<object?>[])[
                         str("?").Map(x => (object?)x),
-                        lexeme((lazyp(() => _expression)).label("default")),
+                        (lazyp(() => _expression)).label("default"),
                     ]).Map(x => (object?)x)),
                     attempt(eof.Map(x => (object?)x)),
-                ])),
-            ]).Map(x => (object?)x));
+                ]),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> ellipses => field ??=
-            attempt(str("...").Map(x => (object?)x));
+        public virtual Parser<object?> ellipses => field ??=
+            str("...").Map(x => (object?)x);
         
-        public static Parser<object?> assert_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> assert_expression => field ??=
+            chain((Parser<object?>[])[
                 str("assert").Map(x => (object?)x),
-                lexeme((lazyp(() => _expression)).label("condition")),
-                lexeme(str(";").Map(x => (object?)x)),
-                lexeme((lazyp(() => _expr_function_expression)).label("body")),
-            ]).Map(x => (object?)x));
+                (lazyp(() => _expression)).label("condition"),
+                str(";").Map(x => (object?)x),
+                (lazyp(() => _expr_function_expression)).label("body"),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> with_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> with_expression => field ??=
+            chain((Parser<object?>[])[
                 str("with").Map(x => (object?)x),
-                lexeme((lazyp(() => _expression)).label("environment")),
-                lexeme(str(";").Map(x => (object?)x)),
-                lexeme((lazyp(() => _expr_function_expression)).label("body")),
-            ]).Map(x => (object?)x));
+                (lazyp(() => _expression)).label("environment"),
+                str(";").Map(x => (object?)x),
+                (lazyp(() => _expr_function_expression)).label("body"),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> let_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> let_expression => field ??=
+            chain((Parser<object?>[])[
                 str("let").Map(x => (object?)x),
-                lexeme(choice((Parser<object?>[])[
+                choice((Parser<object?>[])[
                     attempt(lazyp(() => binding_set)),
                     attempt(eof.Map(x => (object?)x)),
-                ])),
-                lexeme(str("in").Map(x => (object?)x)),
-                lexeme((lazyp(() => _expr_function_expression)).label("body")),
-            ]).Map(x => (object?)x));
+                ]),
+                str("in").Map(x => (object?)x),
+                (lazyp(() => _expr_function_expression)).label("body"),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> _expr_if => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> _expr_if => field ??=
+            choice((Parser<object?>[])[
                 attempt(lazyp(() => if_expression)),
                 attempt(lazyp(() => _expr_op)),
-            ]));
+            ]);
         
-        public static Parser<object?> if_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> if_expression => field ??=
+            chain((Parser<object?>[])[
                 str("if").Map(x => (object?)x),
-                lexeme((lazyp(() => _expression)).label("condition")),
-                lexeme(str("then").Map(x => (object?)x)),
-                lexeme((lazyp(() => _expression)).label("consequence")),
-                lexeme(str("else").Map(x => (object?)x)),
-                lexeme((lazyp(() => _expression)).label("alternative")),
-            ]).Map(x => (object?)x));
+                (lazyp(() => _expression)).label("condition"),
+                str("then").Map(x => (object?)x),
+                (lazyp(() => _expression)).label("consequence"),
+                str("else").Map(x => (object?)x),
+                (lazyp(() => _expression)).label("alternative"),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> _expr_op => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> _expr_op => field ??=
+            choice((Parser<object?>[])[
                 attempt(lazyp(() => has_attr_expression)),
                 attempt(lazyp(() => unary_expression)),
                 attempt(lazyp(() => binary_expression)),
                 attempt(lazyp(() => _expr_apply_expression)),
-            ]));
+            ]);
         
-        public static Parser<object?> has_attr_expression => field ??=
-            attempt(/* PREC [11] */ chain((Parser<object?>[])[
+        public virtual Parser<object?> has_attr_expression => field ??=
+            /* PREC [11] */ chain((Parser<object?>[])[
                 (lazyp(() => _expr_op)).label("expression"),
-                lexeme((str("?").Map(x => (object?)x)).label("operator")),
-                lexeme((lazyp(() => attrpath)).label("attrpath")),
-            ]).Map(x => (object?)x));
+                (str("?").Map(x => (object?)x)).label("operator"),
+                (lazyp(() => attrpath)).label("attrpath"),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> unary_expression => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> unary_expression => field ??=
+            choice((Parser<object?>[])[
                 attempt(/* PREC [ 7] */ chain((Parser<object?>[])[
                     (str("!").Map(x => (object?)x)).label("operator"),
-                    lexeme((lazyp(() => _expr_op)).label("argument")),
+                    (lazyp(() => _expr_op)).label("argument"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC [12] */ chain((Parser<object?>[])[
                     (str("-").Map(x => (object?)x)).label("operator"),
-                    lexeme((lazyp(() => _expr_op)).label("argument")),
+                    (lazyp(() => _expr_op)).label("argument"),
                 ]).Map(x => (object?)x)),
-            ]));
+            ]);
         
-        public static Parser<object?> binary_expression => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> binary_expression => field ??=
+            choice((Parser<object?>[])[
                 attempt(/* PREC_LEFT [ 4] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("==").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("==").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 4] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("!=").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("!=").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 5] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("<").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("<").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 5] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("<=").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("<=").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 5] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str(">").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str(">").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 5] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str(">=").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str(">=").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 3] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("&&").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("&&").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 2] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("||").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("||").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 8] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("+").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("+").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 8] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("-").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("-").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 9] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("*").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("*").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_LEFT [ 9] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("/").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("/").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_RIGHT[ 1] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("->").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("->").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_RIGHT[ 6] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("//").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("//").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
                 attempt(/* PREC_RIGHT[10] */ chain((Parser<object?>[])[
                     (lazyp(() => _expr_op)).label("left"),
-                    lexeme((str("++").Map(x => (object?)x)).label("operator")),
-                    lexeme((lazyp(() => _expr_op)).label("right")),
+                    (str("++").Map(x => (object?)x)).label("operator"),
+                    (lazyp(() => _expr_op)).label("right"),
                 ]).Map(x => (object?)x)),
-            ]));
+            ]);
         
-        public static Parser<object?> _expr_apply_expression => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> _expr_apply_expression => field ??=
+            choice((Parser<object?>[])[
                 attempt(lazyp(() => apply_expression)),
                 attempt(lazyp(() => _expr_select_expression)),
-            ]));
+            ]);
         
-        public static Parser<object?> apply_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> apply_expression => field ??=
+            chain((Parser<object?>[])[
                 (lazyp(() => _expr_apply_expression)).label("function"),
-                lexeme((lazyp(() => _expr_select_expression)).label("argument")),
-            ]).Map(x => (object?)x));
+                (lazyp(() => _expr_select_expression)).label("argument"),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> _expr_select_expression => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> _expr_select_expression => field ??=
+            choice((Parser<object?>[])[
                 attempt(lazyp(() => select_expression)),
                 attempt(lazyp(() => _expr_simple)),
-            ]));
+            ]);
         
-        public static Parser<object?> select_expression => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> select_expression => field ??=
+            choice((Parser<object?>[])[
                 attempt(chain((Parser<object?>[])[
                     (lazyp(() => _expr_simple)).label("expression"),
-                    lexeme(str(".").Map(x => (object?)x)),
-                    lexeme((lazyp(() => attrpath)).label("attrpath")),
+                    str(".").Map(x => (object?)x),
+                    (lazyp(() => attrpath)).label("attrpath"),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     (lazyp(() => _expr_simple)).label("expression"),
-                    lexeme(str(".").Map(x => (object?)x)),
-                    lexeme((lazyp(() => attrpath)).label("attrpath")),
-                    lexeme(str("or").Map(x => (object?)x)),
-                    lexeme((lazyp(() => _expr_select_expression)).label("default")),
+                    str(".").Map(x => (object?)x),
+                    (lazyp(() => attrpath)).label("attrpath"),
+                    str("or").Map(x => (object?)x),
+                    (lazyp(() => _expr_select_expression)).label("default"),
                 ]).Map(x => (object?)x)),
-            ]));
+            ]);
         
-        public static Parser<object?> _expr_simple => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> _expr_simple => field ??=
+            choice((Parser<object?>[])[
                 attempt(lazyp(() => variable_expression)),
                 attempt(lazyp(() => integer_expression)),
                 attempt(lazyp(() => float_expression)),
@@ -374,193 +372,195 @@ internal static partial class TreeSitter
                 attempt(lazyp(() => let_attrset_expression)),
                 attempt(lazyp(() => rec_attrset_expression)),
                 attempt(lazyp(() => list_expression)),
-            ]));
+            ]);
         
-        public static Parser<object?> parenthesized_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> parenthesized_expression => field ??=
+            chain((Parser<object?>[])[
                 str("(").Map(x => (object?)x),
-                lexeme((lazyp(() => _expression)).label("expression")),
-                lexeme(str(")").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                (lazyp(() => _expression)).label("expression"),
+                str(")").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> attrset_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> attrset_expression => field ??=
+            chain((Parser<object?>[])[
                 str("{").Map(x => (object?)x),
-                lexeme(choice((Parser<object?>[])[
+                choice((Parser<object?>[])[
                     attempt(lazyp(() => binding_set)),
                     attempt(eof.Map(x => (object?)x)),
-                ])),
-                lexeme(str("}").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                ]),
+                str("}").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> let_attrset_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> let_attrset_expression => field ??=
+            chain((Parser<object?>[])[
                 str("let").Map(x => (object?)x),
-                lexeme(str("{").Map(x => (object?)x)),
-                lexeme(choice((Parser<object?>[])[
+                str("{").Map(x => (object?)x),
+                choice((Parser<object?>[])[
                     attempt(lazyp(() => binding_set)),
                     attempt(eof.Map(x => (object?)x)),
-                ])),
-                lexeme(str("}").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                ]),
+                str("}").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> rec_attrset_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> rec_attrset_expression => field ??=
+            chain((Parser<object?>[])[
                 str("rec").Map(x => (object?)x),
-                lexeme(str("{").Map(x => (object?)x)),
-                lexeme(choice((Parser<object?>[])[
+                str("{").Map(x => (object?)x),
+                choice((Parser<object?>[])[
                     attempt(lazyp(() => binding_set)),
                     attempt(eof.Map(x => (object?)x)),
-                ])),
-                lexeme(str("}").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                ]),
+                str("}").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> string_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> string_expression => field ??=
+            chain((Parser<object?>[])[
                 str("\"").Map(x => (object?)x),
-                lexeme(many(lexeme(choice((Parser<object?>[])[
+                many(LEXEME(choice((Parser<object?>[])[
                     attempt(lazyp(() => string_fragment)),
                     attempt(lazyp(() => interpolation)),
                     attempt(choice((Parser<object?>[])[
                         attempt(lazyp(() => escape_sequence)),
                         attempt(chain((Parser<object?>[])[
                             lazyp(() => dollar_escape),
-                            lexeme((str("$").Map(x => (object?)x)).label("string_fragment")),
+                            (str("$").Map(x => (object?)x)).label("string_fragment"),
                         ]).Map(x => (object?)x)),
                     ])),
-                ]))).Map(x => (object?)x)),
-                lexeme(str("\"").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                ]))).Map(x => (object?)x),
+                str("\"").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> escape_sequence => field ??=
-            attempt(regex("\\\\([^$]|\\s)").Map(x => (object?)x));
+        public virtual Parser<object?> escape_sequence => field ??=
+            regex("\\\\([^$]|\\s)").Map(x => (object?)x);
         
-        public static Parser<object?> indented_string_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> indented_string_expression => field ??=
+            chain((Parser<object?>[])[
                 str("''").Map(x => (object?)x),
-                lexeme(many(lexeme(choice((Parser<object?>[])[
+                many(LEXEME(choice((Parser<object?>[])[
                     attempt((lazyp(() => _indented_string_fragment)).label("string_fragment")),
                     attempt(lazyp(() => interpolation)),
                     attempt(choice((Parser<object?>[])[
                         attempt((lazyp(() => _indented_escape_sequence)).label("escape_sequence")),
                         attempt(chain((Parser<object?>[])[
                             (lazyp(() => _indented_dollar_escape)).label("dollar_escape"),
-                            lexeme((str("$").Map(x => (object?)x)).label("string_fragment")),
+                            (str("$").Map(x => (object?)x)).label("string_fragment"),
                         ]).Map(x => (object?)x)),
                     ])),
-                ]))).Map(x => (object?)x)),
-                lexeme(str("''").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                ]))).Map(x => (object?)x),
+                str("''").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> _indented_escape_sequence => field ??=
-            attempt(regex("'''|''\\\\([^$]|\\s)").Map(x => (object?)x));
+        public virtual Parser<object?> _indented_escape_sequence => field ??=
+            regex("'''|''\\\\([^$]|\\s)").Map(x => (object?)x);
         
-        public static Parser<object?> binding_set => field ??=
-            attempt(many1(lexeme((choice((Parser<object?>[])[
+        public virtual Parser<object?> binding_set => field ??=
+            many1(LEXEME((choice((Parser<object?>[])[
                 attempt(lazyp(() => binding)),
                 attempt(lazyp(() => inherit)),
                 attempt(lazyp(() => inherit_from)),
-            ])).label("binding"))).Map(x => (object?)x));
+            ])).label("binding"))).Map(x => (object?)x);
         
-        public static Parser<object?> binding => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> binding => field ??=
+            chain((Parser<object?>[])[
                 (lazyp(() => attrpath)).label("attrpath"),
-                lexeme(str("=").Map(x => (object?)x)),
-                lexeme((lazyp(() => _expression)).label("expression")),
-                lexeme(str(";").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                str("=").Map(x => (object?)x),
+                (lazyp(() => _expression)).label("expression"),
+                str(";").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> inherit => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> inherit => field ??=
+            chain((Parser<object?>[])[
                 str("inherit").Map(x => (object?)x),
-                lexeme((lazyp(() => inherited_attrs)).label("attrs")),
-                lexeme(str(";").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                (lazyp(() => inherited_attrs)).label("attrs"),
+                str(";").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> inherit_from => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> inherit_from => field ??=
+            chain((Parser<object?>[])[
                 str("inherit").Map(x => (object?)x),
-                lexeme(str("(").Map(x => (object?)x)),
-                lexeme((lazyp(() => _expression)).label("expression")),
-                lexeme(str(")").Map(x => (object?)x)),
-                lexeme((lazyp(() => inherited_attrs)).label("attrs")),
-                lexeme(str(";").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                str("(").Map(x => (object?)x),
+                (lazyp(() => _expression)).label("expression"),
+                str(")").Map(x => (object?)x),
+                (lazyp(() => inherited_attrs)).label("attrs"),
+                str(";").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> attrpath => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> attrpath => field ??=
+            chain((Parser<object?>[])[
                 (choice((Parser<object?>[])[
                     attempt(lazyp(() => identifier)),
                     attempt(lazyp(() => string_expression)),
                     attempt(lazyp(() => interpolation)),
                 ])).label("attr"),
-                lexeme(many(lexeme(chain((Parser<object?>[])[
+                many(LEXEME(chain((Parser<object?>[])[
                     str(".").Map(x => (object?)x),
-                    lexeme((choice((Parser<object?>[])[
+                    (choice((Parser<object?>[])[
                         attempt(lazyp(() => identifier)),
                         attempt(lazyp(() => string_expression)),
                         attempt(lazyp(() => interpolation)),
-                    ])).label("attr")),
-                ]).Map(x => (object?)x))).Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                    ])).label("attr"),
+                ]).Map(x => (object?)x))).Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> inherited_attrs => field ??=
-            attempt(many1(lexeme((choice((Parser<object?>[])[
+        public virtual Parser<object?> inherited_attrs => field ??=
+            many1(LEXEME((choice((Parser<object?>[])[
                 attempt(lazyp(() => identifier)),
                 attempt(lazyp(() => string_expression)),
                 attempt(lazyp(() => interpolation)),
-            ])).label("attr"))).Map(x => (object?)x));
+            ])).label("attr"))).Map(x => (object?)x);
         
-        public static Parser<object?> _immediate_interpolation => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> _immediate_interpolation => field ??=
+            chain((Parser<object?>[])[
                 str("${").Map(x => (object?)x),
-                lexeme((lazyp(() => _expression)).label("expression")),
-                lexeme(str("}").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                (lazyp(() => _expression)).label("expression"),
+                str("}").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> interpolation => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> interpolation => field ??=
+            chain((Parser<object?>[])[
                 str("${").Map(x => (object?)x),
-                lexeme((lazyp(() => _expression)).label("expression")),
-                lexeme(str("}").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                (lazyp(() => _expression)).label("expression"),
+                str("}").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> list_expression => field ??=
-            attempt(chain((Parser<object?>[])[
+        public virtual Parser<object?> list_expression => field ??=
+            chain((Parser<object?>[])[
                 str("[").Map(x => (object?)x),
-                lexeme(many(lexeme((lazyp(() => _expr_select_expression)).label("element"))).Map(x => (object?)x)),
-                lexeme(str("]").Map(x => (object?)x)),
-            ]).Map(x => (object?)x));
+                many(LEXEME((lazyp(() => _expr_select_expression)).label("element"))).Map(x => (object?)x),
+                str("]").Map(x => (object?)x),
+            ]).Map(x => (object?)x);
         
-        public static Parser<object?> comment => field ??=
-            attempt(choice((Parser<object?>[])[
+        public virtual Parser<object?> comment => field ??=
+            choice((Parser<object?>[])[
                 attempt(chain((Parser<object?>[])[
                     str("#").Map(x => (object?)x),
-                    lexeme(regex(".*").Map(x => (object?)x)),
+                    regex(".*").Map(x => (object?)x),
                 ]).Map(x => (object?)x)),
                 attempt(chain((Parser<object?>[])[
                     str("/*").Map(x => (object?)x),
-                    lexeme(regex("[^*]*\\*+([^/*][^*]*\\*+)*").Map(x => (object?)x)),
-                    lexeme(str("/").Map(x => (object?)x)),
+                    regex("[^*]*\\*+([^/*][^*]*\\*+)*").Map(x => (object?)x),
+                    str("/").Map(x => (object?)x),
                 ]).Map(x => (object?)x)),
-            ]));
+            ]);
         
-        public static partial Parser<object?> string_fragment { get; }
+        public abstract Parser<object?> string_fragment { get; }
         
-        public static partial Parser<object?> _indented_string_fragment { get; }
+        public abstract Parser<object?> _indented_string_fragment { get; }
         
-        public static partial Parser<object?> _path_start { get; }
+        public abstract Parser<object?> _path_start { get; }
         
-        public static partial Parser<object?> path_fragment { get; }
+        public abstract Parser<object?> path_fragment { get; }
         
-        public static partial Parser<object?> dollar_escape { get; }
+        public abstract Parser<object?> dollar_escape { get; }
         
-        public static partial Parser<object?> _indented_dollar_escape { get; }
+        public abstract Parser<object?> _indented_dollar_escape { get; }
         
-        public static Parser<object?> WHITESPACE => field ??=
+        public virtual Parser<object?> WHITESPACE => field ??=
             choice((Parser<object?>[])[
                 attempt(regex("\\s").Map(x => (object?)x)),
                 attempt(lazyp(() => comment)),
             ]);
+        
+        public virtual Parser<A> LEXEME<A>(Parser<A> p) => from _ in optional(WHITESPACE) from result in p select result;
     }
 }

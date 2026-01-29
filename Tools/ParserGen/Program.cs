@@ -78,22 +78,19 @@ async Task<int> Generate(ParseResult parseResult, CancellationToken cancellation
                                           }
                                           """);
         await outputWriter.WriteLineAsync();
-
-        await outputWriter.WriteLineAsync("public static Parser<A> lexeme<A>(Parser<A> p) => from _ in optional(Rules.WHITESPACE) from result in p select result;");
-        await outputWriter.WriteLineAsync();
         
-        await outputWriter.WriteLineAsync("public static partial class Rules");
+        await outputWriter.WriteLineAsync("public abstract partial class Rules");
         await outputWriter.WriteLineAsync("{");
         using (outputWriter.WithIndent())
         {
             foreach (var rule in grammarJson.Rules)
             {
-                await outputWriter.WriteLineAsync($"public static Parser<object?> {rule.Key} => field ??=");
+                await outputWriter.WriteLineAsync($"public virtual Parser<object?> {rule.Key} => field ??=");
                 using (outputWriter.WithIndent())
                 {
-                    await outputWriter.WriteAsync("attempt(");
+                    // await outputWriter.WriteAsync("attempt(");
                     await ruleWriter.WriteRule(rule.Value, true);
-                    await outputWriter.WriteLineAsync(");");
+                    await outputWriter.WriteLineAsync(";");
                 }
 
                 await outputWriter.WriteLineAsync();
@@ -104,16 +101,19 @@ async Task<int> Generate(ParseResult parseResult, CancellationToken cancellation
                 if (externalRule is not RuleDto.Symbol_ symbolRule)
                     throw new InvalidOperationException();
 
-                await outputWriter.WriteLineAsync($"public static partial Parser<object?> {symbolRule.Name} {{ get; }}");
+                await outputWriter.WriteLineAsync($"public abstract Parser<object?> {symbolRule.Name} {{ get; }}");
                 await outputWriter.WriteLineAsync();
             }
             
-            await outputWriter.WriteLineAsync("public static Parser<object?> WHITESPACE => field ??=");
+            await outputWriter.WriteLineAsync("public virtual Parser<object?> WHITESPACE => field ??=");
             using (outputWriter.WithIndent())
             {
                 await ruleWriter.WriteRule(RuleDto.Choice(grammarJson.Extras), true);
                 await outputWriter.WriteLineAsync(";");
             }
+            await outputWriter.WriteLineAsync();
+
+            await outputWriter.WriteLineAsync("public virtual Parser<A> LEXEME<A>(Parser<A> p) => from _ in optional(WHITESPACE) from result in p select result;");
         }
         await outputWriter.WriteLineAsync("}");
     }
