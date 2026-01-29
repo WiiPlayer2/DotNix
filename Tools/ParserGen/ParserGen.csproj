@@ -8,4 +8,13 @@
         <AssemblyName>parser-gen</AssemblyName>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="FunicularSwitch.Generators" Version="4.6.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="System.CommandLine" Version="2.0.2" />
+      <PackageReference Include="System.Text.Json" Version="10.0.2" />
+    </ItemGroup>
+
 </Project>
