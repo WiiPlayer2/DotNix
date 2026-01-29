@@ -25,6 +25,7 @@ public static partial class NixParser
 
     public static GenLanguageDef Language => field ??= GenLanguageDef.Empty.With(
         ReservedOpNames: ["+", "-"],
+        ReservedNames: ["let", "in"],
         IdentLetter: choice(alphaNum, oneOf("-_")),
         IdentStart: choice(letter, ch('_'))
     );
