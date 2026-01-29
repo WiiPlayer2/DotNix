@@ -16,7 +16,7 @@ public static partial class NixParser
     }
 
     public static Parser<NixExpr> Term => field ??=
-        either(TokenParser.Parens(lazyp(() => Expression)), Literals.Any);
+        choice(TokenParser.Parens(lazyp(() => Expression)), Literals.Any, Expressions.Any);
     
     public static Parser<NixExpr> Expression => field ??=
         Expr.buildExpressionParser(
@@ -31,4 +31,10 @@ public static partial class NixParser
     );
 
     public static GenTokenParser TokenParser => field ??= Token.makeTokenParser(Language);
+
+    private static Parser<(A Value, PosSpan Span)> WithSpan<A>(Parser<A> p) =>
+        from beginPos in getPos
+        from value in p
+        from endPos in getPos
+        select (value, new PosSpan(beginPos, endPos));
 }

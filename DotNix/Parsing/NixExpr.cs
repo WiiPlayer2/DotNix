@@ -19,19 +19,3 @@ public abstract partial record NixExpr(PosSpan Span)
 
     public record Identifier_(NixIdentifier Value) : NixExpr(Value.Span);
 }
-
-[UnionType]
-public abstract partial record NixAttrsStmt(PosSpan Span)
-{
-    public record Assign_(PosSpan Span, NixAttrsPath Path, NixExpr Expression) : NixAttrsStmt(Span);
-}
-
-[UnionType]
-public abstract partial record NixLetStmt(PosSpan Span)
-{
-    public record Assign_(PosSpan Span, NixIdentifier Identifier, NixExpr Expression) : NixLetStmt(Span);
-}
-
-public record NixIdentifier(PosSpan Span, string Text);
-
-public record NixAttrsPath(PosSpan Span, NixIdentifier Identifier);
