@@ -9,7 +9,10 @@ public static partial class NixParser
 {
     public static NixExpr Parse(string code)
     {
-        var test = parse(new TreeSitter.MyRules().source_code, code);
+        var start = Expressions2.Start;
+        var test = parse(start, code);
+        if(test.IsFaulted)
+            throw new Exception(test.Reply.Error?.ToString());
         
         var result = parse(Expression, code);
         return result.IsFaulted
