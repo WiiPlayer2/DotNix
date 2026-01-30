@@ -20,4 +20,8 @@ public abstract partial record NixExpr
     public record LetBinding_(IReadOnlyList<NixBind> Statements, NixExpr Expression) : NixExpr;
 
     public record Identifier_(NixIdentifier Value) : NixExpr;
+
+    public record Function_(NixFunctionArg Arg, NixExpr Body) : NixExpr;
+    
+    public record Apply_(NixExpr Func, NixExpr Arg) : NixExpr;
 }

@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using DotNix.Compiling;
+using LanguageExt.UnsafeValueAccess;
 using ExprP = LanguageExt.Parsec.Parser<DotNix.Parsing.NixExpr>;
 using KwP = LanguageExt.Parsec.Parser<string>;
 
@@ -30,32 +32,44 @@ partial class NixParser
             IdentStart: either(letter, ch('_')),
             IdentLetter: either(alphaNum, oneOf("_'-")),
             
-            OpStart: oneOf("+-*/"),
-            OpLetter: oneOf("+-*/"),
+            // OpStart: oneOf("+-*/"),
+            // OpLetter: oneOf("+-*/"),
             
             CaseSensitive: true
         );
 
         public static GenTokenParser Tokens => field ??= Token.makeTokenParser(Language);
 
-        private static KwP keyword(string name) => Tokens.Reserved(name);
+        private static Parser<A> debug<A>(Parser<A> p, string label) => input =>
+        {
+            Debug.WriteLine($"[-> {label}] {input.Pos} | {input.DefPos}");
+            
+            var result = p(input);
+            
+            Debug.WriteLine($"[<- {label}] {result}");
+            return result;
+        };
+        
+        private static KwP keyword(string name) => debug(Tokens.Reserved(name), $"keyword \"{name}\"");
+        
+        private static Parser<Unit> reservedOp(string name) => debug(Tokens.ReservedOp(name), $"op \"{name}\"");
 
         private static Operator<NixExpr> BinOp(Assoc assoc, string op, BinaryOperator op2) =>
             Operator.Infix(
                 assoc, 
-                Tokens.ReservedOp(op)
+                reservedOp(op)
                     .Map<Unit, Func<NixExpr, NixExpr, NixExpr>>(x => (a, b) => NixExpr.BinaryOp(new BinaryOperatorSymbol(op2), a, b)));
 
         private static Operator<NixExpr> UnOp(string op, UnaryOperator op2) =>
             Operator.Prefix(
-                Tokens.ReservedOp(op).Map<Unit, Func<NixExpr, NixExpr>>(x => a => NixExpr.UnaryOp(new UnaryOperatorSymbol(op2), a))
+                reservedOp(op).Map<Unit, Func<NixExpr, NixExpr>>(x => a => NixExpr.UnaryOp(new UnaryOperatorSymbol(op2), a))
             );
 
         private static KwP LET => field ??= keyword("let");
         
         private static KwP IN_KW => field ??= keyword("in");
 
-        private static Parser<NixIdentifier> ID => field ??= Tokens.Identifier.Map(x => new NixIdentifier(x));
+        private static Parser<NixIdentifier> ID => field ??= debug(Tokens.Identifier, "identifier").Map(x => new NixIdentifier(x));
         
         private static KwP OR_KW => field ??= keyword("or");
         
@@ -68,19 +82,28 @@ partial class NixParser
             select new NixFloat(n);
 
         private static Parser<NixNumber> NUMBER_LIT => field ??=
-            from n in Tokens.NaturalOrFloat
+            from _10 in notFollowedBy(either(reservedOp("-"), reservedOp("+")))
+            from n in debug(Tokens.NaturalOrFloat, "number")
             select n.Match<NixNumber>(
                 i => new NixInteger(i),
                 f => new NixFloat(f)
             );
 
-        public static ExprP Start => field ??= Expr;
+        public static ExprP Start => field ??=
+            from expr in Expr
+            from _10 in eof
+            select expr;
         
         public static ExprP Expr => field ??= ExprFunction;
         
         public static ExprP ExprFunction => field ??=
             choice((ExprP[])[
-                // ID ':' expr_function
+                attempt(
+                    from arg in ID
+                    from _10 in Tokens.Colon
+                    from body in ExprFunction
+                    select NixExpr.Function(NixFunctionArg.Simple(arg), body)
+                ),
                 // formal_set ':' expr_function[body]
                 // formal_set '@' ID ':' expr_function[body]
                 // ID '@' formal_set ':' expr_function[body]
@@ -112,11 +135,28 @@ partial class NixParser
                 ExprApp
             );
 
-        public static ExprP ExprApp => field ??=
-            choice((ExprP[]) [
-                // expr_app expr_select
-                ExprSelect,
-            ]);
+        // public static ExprP ExprApp => field ??=
+        //     choice((ExprP[]) [
+        //         attempt(ExprSelect),
+        //         attempt(
+        //             from func in lazyp(() => ExprApp)
+        //             from arg in ExprSelect
+        //             select NixExpr.Apply(func, arg)
+        //         ),
+        //     ]);
+
+        public static ExprP ExprApp
+        {
+            get
+            {
+                return field ??=
+                    from exprs in many1(ExprSelect)
+                    select BuildApplyExpr(exprs.Head.ValueUnsafe()!, exprs.Tail);
+
+                NixExpr BuildApplyExpr(NixExpr head, Seq<NixExpr> tail) =>
+                    tail.IsEmpty ? head : NixExpr.Apply(head, BuildApplyExpr(tail.Head.ValueUnsafe()!, tail.Tail));
+            }
+        }
 
         public static ExprP ExprSelect => field ??=
             choice((ExprP[]) [

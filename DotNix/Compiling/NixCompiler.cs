@@ -12,7 +12,9 @@ public class NixCompiler
         list: x => Compile(scope, x),
         attrs: x => Compile(scope, x),
         letBinding: x => Compile(scope, x),
-        identifier: x => Compile(scope, x)
+        identifier: x => Compile(scope, x),
+        function: x => Compile(scope, x),
+        apply: x => Compile(scope, x)
     );
 
     private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value;
@@ -68,4 +70,27 @@ public class NixCompiler
 
     private static NixValue2 Compile(NixScope scope, NixExpr.Identifier_ identifier) =>
         scope.Get(identifier.Value.Text).IfNone(() => throw new Exception());
+
+    private static NixValue2 Compile(NixScope scope, NixExpr.Function_ function)
+    {
+        return new NixFunction(arg =>
+        {
+            var fnScope = new NixScope(scope, function.Arg.Match<IReadOnlyDictionary<string, NixValue2>>(
+                simple: simple => Map((simple.Name.Text, arg))
+            ));
+            var result = Compile(fnScope, function.Body);
+            return Task.FromResult(result);
+        });
+    }
+
+    private static NixValue2 Compile(NixScope scope, NixExpr.Apply_ apply)
+    {
+        var func = Compile(scope, apply.Func);
+        var arg = Compile(scope, apply.Arg);
+        return new NixThunk(new(async () =>
+        {
+            var fn = (NixFunction) await func.Strict;
+            return await fn.Fn(arg);
+        }));
+    }
 }
