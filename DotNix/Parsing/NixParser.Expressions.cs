@@ -1,5 +1,6 @@
 using DotNix.Compiling;
 using ExprP = LanguageExt.Parsec.Parser<DotNix.Parsing.NixExpr>;
+using KwP = LanguageExt.Parsec.Parser<string>;
 
 namespace DotNix.Parsing;
 
@@ -37,7 +38,7 @@ partial class NixParser
 
         public static GenTokenParser Tokens => field ??= Token.makeTokenParser(Language);
 
-        private static Parser<string> keyword(string name) => Tokens.Reserved(name);
+        private static KwP keyword(string name) => Tokens.Reserved(name);
 
         private static Operator<NixExpr> BinOp(Assoc assoc, string op, BinaryOperator op2) =>
             Operator.Infix(
@@ -50,13 +51,13 @@ partial class NixParser
                 Tokens.ReservedOp(op).Map<Unit, Func<NixExpr, NixExpr>>(x => a => NixExpr.UnaryOp(new UnaryOperatorSymbol(op2), a))
             );
 
-        private static Parser<string> LET => field ??= keyword("let");
+        private static KwP LET => field ??= keyword("let");
         
-        private static Parser<string> IN_KW => field ??= keyword("in");
+        private static KwP IN_KW => field ??= keyword("in");
+
+        private static Parser<NixIdentifier> ID => field ??= Tokens.Identifier.Map(x => new NixIdentifier(x));
         
-        private static Parser<string> ID => field ??= Tokens.Identifier;
-        
-        private static Parser<string> OR_KW => field ??= keyword("or");
+        private static KwP OR_KW => field ??= keyword("or");
         
         private static Parser<NixInteger> INT_LIT => field ??=
             from n in Tokens.Integer
@@ -127,7 +128,7 @@ partial class NixParser
 
         public static ExprP ExprSimple => field ??=
             choice((ExprP[]) [
-                ID.Map(x => NixExpr.Identifier(new(x))),
+                ID.Map(NixExpr.Identifier),
                 NUMBER_LIT.Map(NixExpr.Literal), // INT_LIT + FLOAT_INT
                 // '"' string_parts '"'
                 // IND_STRING_OPEN ind_string_parts IND_STRING_CLOSE
@@ -172,10 +173,10 @@ partial class NixParser
             ]);
 
         public static Parser<NixAttrsPath> Attr => field ??=
-            choice((Parser<string>[]) [
+            choice(
                 ID,
-                OR_KW,
-            ]).Map(x => new NixAttrsPath(new(x)));
+                OR_KW.Map(x => new NixIdentifier(x))
+            ).Map(x => new NixAttrsPath(x));
 
         public static Parser<Seq<NixExpr>> List => field ??= many(ExprSelect);
     }
