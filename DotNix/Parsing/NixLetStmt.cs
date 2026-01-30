@@ -3,7 +3,7 @@ using FunicularSwitch.Generators;
 namespace DotNix.Parsing;
 
 [UnionType]
-public abstract partial record NixLetStmt(PosSpan Span)
+public abstract partial record NixLetStmt
 {
-    public record Assign_(PosSpan Span, NixIdentifier Identifier, NixExpr Expression) : NixLetStmt(Span);
+    public record Assign_(NixIdentifier Identifier, NixExpr Expression) : NixLetStmt;
 }

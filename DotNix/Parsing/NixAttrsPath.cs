@@ -1,3 +1,3 @@
 namespace DotNix.Parsing;
 
-public record NixAttrsPath(PosSpan Span, NixIdentifier Identifier);
+public record NixAttrsPath(NixIdentifier Identifier);

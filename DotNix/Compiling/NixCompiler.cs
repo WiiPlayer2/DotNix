@@ -6,6 +6,7 @@ namespace DotNix.Compiling;
 public class NixCompiler
 {
     public static NixValue2 Compile(NixScope scope, NixExpr expr) => expr.Match(
+        unaryOp: x => Compile(scope, x),
         binaryOp: x => Compile(scope, x),
         literal: Compile,
         list: x => Compile(scope, x),
@@ -33,6 +34,19 @@ public class NixCompiler
         ));
     }
 
+    private static NixThunk Compile(NixScope scope, NixExpr.UnaryOp_ unaryOp)
+    {
+        var aValue = Compile(scope, unaryOp.Expr);
+        return unaryOp.Operator.Operator switch
+        {
+            UnaryOperator.Negate => Op(Operators.Negate),
+        };
+
+        NixThunk Op(Func<NixValue2, NixValue2> fn) => new(
+            new(async () => fn(await aValue.Strict))
+        );
+    }
+
     private static NixList Compile(NixScope scope, NixExpr.List_ list) => new(list.Items.Select(x => Compile(scope, x)).ToList());
 
     private static NixAttrs Compile(NixScope scope, NixExpr.Attrs_ attrs) => new(
@@ -47,7 +61,7 @@ public class NixCompiler
     private static NixValue2 Compile(NixScope scope, NixExpr.LetBinding_ let)
     {
         var letScope = new NixScope(scope, let.Statements.Select(s => s.Match(
-            assign: assign => new KeyValuePair<string, NixValue2>(assign.Identifier.Text, Compile(scope, assign.Expression)))
+            assign: assign => new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Compile(scope, assign.Expression)))
         ).ToDictionary());
         return Compile(letScope, let.Expression);
     }

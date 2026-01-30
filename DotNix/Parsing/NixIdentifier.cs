@@ -1,3 +1,3 @@
 namespace DotNix.Parsing;
 
-public record NixIdentifier(PosSpan Span, string Text);
+public record NixIdentifier(string Text);

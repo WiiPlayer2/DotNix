@@ -2,4 +2,4 @@ using System;
 
 namespace DotNix.Parsing;
 
-public record BinaryOperatorSymbol(PosSpan Span, BinaryOperator Operator);
+public record BinaryOperatorSymbol(BinaryOperator Operator);

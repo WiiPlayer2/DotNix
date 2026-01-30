@@ -5,17 +5,19 @@ using FunicularSwitch.Generators;
 namespace DotNix.Parsing;
 
 [UnionType]
-public abstract partial record NixExpr(PosSpan Span)
+public abstract partial record NixExpr
 {
-    public record Literal_(PosSpan Span, NixValue2 Value) : NixExpr(Span);
+    public record Literal_(NixValue2 Value) : NixExpr;
 
-    public record BinaryOp_(BinaryOperatorSymbol Operator, NixExpr Left, NixExpr Right) : NixExpr(Left.Span | Operator.Span | Right.Span);
+    public record BinaryOp_(BinaryOperatorSymbol Operator, NixExpr Left, NixExpr Right) : NixExpr;
+    
+    public record UnaryOp_(UnaryOperatorSymbol Operator, NixExpr Expr) : NixExpr;
 
-    public record List_(PosSpan Span, IReadOnlyList<NixExpr> Items) : NixExpr(Span);
+    public record List_(IReadOnlyList<NixExpr> Items) : NixExpr;
 
-    public record Attrs_(PosSpan Span, IReadOnlyList<NixAttrsStmt> Statements) : NixExpr(Span);
+    public record Attrs_(IReadOnlyList<NixBind> Statements) : NixExpr;
 
-    public record LetBinding_(PosSpan Span, IReadOnlyList<NixLetStmt> Statements, NixExpr Expression) : NixExpr(Span);
+    public record LetBinding_(IReadOnlyList<NixBind> Statements, NixExpr Expression) : NixExpr;
 
-    public record Identifier_(NixIdentifier Value) : NixExpr(Value.Span);
+    public record Identifier_(NixIdentifier Value) : NixExpr;
 }
