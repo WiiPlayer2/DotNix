@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNix.Tests", "DotNix.Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{381EF91F-6851-47ED-9559-AC213D0FCA8E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParserGen", "Tools\ParserGen\ParserGen.csproj", "{4537804D-3ED5-4D3A-AD1E-60E62AF2431C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,12 +20,7 @@ Global
 		{0D0343F3-4957-43FB-93D6-A55D85068031}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D0343F3-4957-43FB-93D6-A55D85068031}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D0343F3-4957-43FB-93D6-A55D85068031}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4537804D-3ED5-4D3A-AD1E-60E62AF2431C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4537804D-3ED5-4D3A-AD1E-60E62AF2431C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4537804D-3ED5-4D3A-AD1E-60E62AF2431C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4537804D-3ED5-4D3A-AD1E-60E62AF2431C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{4537804D-3ED5-4D3A-AD1E-60E62AF2431C} = {381EF91F-6851-47ED-9559-AC213D0FCA8E}
 	EndGlobalSection
 EndGlobal
