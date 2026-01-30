@@ -73,6 +73,8 @@ partial class NixParser
         
         private static KwP OR_KW => field ??= keyword("or");
         
+        private static KwP WITH => field ??= keyword("with");
+        
         private static Parser<NixInteger> INT_LIT => field ??=
             from n in Tokens.Integer
             select new NixInteger(n);
@@ -109,6 +111,11 @@ partial class NixParser
                 // ID '@' formal_set ':' expr_function[body]
                 // ASSERT expr ';' expr_function
                 // WITH expr ';' expr_function
+                from _10 in WITH
+                from bindExpr in Expr
+                from _30 in Tokens.Semi
+                from expr in ExprFunction
+                select NixExpr.With(bindExpr, expr),
                 from _10 in LET
                 from binds in Binds
                 from _30 in IN_KW
@@ -145,18 +152,9 @@ partial class NixParser
         //         ),
         //     ]);
 
-        public static ExprP ExprApp
-        {
-            get
-            {
-                return field ??=
-                    from exprs in many1(ExprSelect)
-                    select BuildApplyExpr(exprs.Head.ValueUnsafe()!, exprs.Tail);
-
-                NixExpr BuildApplyExpr(NixExpr head, Seq<NixExpr> tail) =>
-                    tail.IsEmpty ? head : NixExpr.Apply(head, BuildApplyExpr(tail.Head.ValueUnsafe()!, tail.Tail));
-            }
-        }
+        public static ExprP ExprApp => field ??=
+            from exprs in many1(ExprSelect)
+            select exprs.Tail.Aggregate(exprs.Head.ValueUnsafe()!, NixExpr.Apply);
 
         public static ExprP ExprSelect => field ??=
             choice((ExprP[]) [

@@ -13,7 +13,7 @@ public static class Nix
     public static async Task<NixValue2> EvalExpr(string code)
     {
         var expr = NixParser.Parse(code);
-        var lazyValue = NixCompiler.Compile(NixScope.Empty, expr);
+        var lazyValue = NixCompiler.Compile(NixScope.Default, expr);
         var value = await lazyValue.Strict;
         return value;
     }

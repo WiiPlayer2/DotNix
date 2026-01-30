@@ -2,6 +2,12 @@ namespace DotNix.Compiling;
 
 public static class Builtins
 {
+    public static NixAttrs AsAttrs => field ??= new NixAttrs(Map<string, NixValue2>(
+        ("add", AddFn)
+    ));
+
+    private static NixFunction AddFn => field ??= new(a => Task.FromResult<NixValue2>(new NixFunction(async b => Add((NixNumber) await a.Strict, (NixNumber) await b.Strict))));
+    
     public static NixNumber Add(NixNumber a, NixNumber b) =>
         CalcOp(Add, Add, a, b);
 

@@ -14,7 +14,8 @@ public class NixCompiler
         letBinding: x => Compile(scope, x),
         identifier: x => Compile(scope, x),
         function: x => Compile(scope, x),
-        apply: x => Compile(scope, x)
+        apply: x => Compile(scope, x),
+        with: x => Compile(scope, x)
     );
 
     private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value;
@@ -91,6 +92,22 @@ public class NixCompiler
         {
             var fn = (NixFunction) await func.Strict;
             return await fn.Fn(arg);
+        }));
+    }
+
+    private static NixValue2 Compile(NixScope scope, NixExpr.With_ with)
+    {
+        return new NixThunk(new AsyncLazy<NixValue2>(async () =>
+        {
+            var bindValue = await Compile(scope, with.BindExpr).Strict; // TODO need .Unthunk or similar
+            if (bindValue is not NixAttrs bindAttrs)
+                throw new InvalidOperationException();
+            
+            var withScope = new NixScope(
+                scope,
+                bindAttrs.Items
+            );
+            return Compile(withScope, with.Expression);
         }));
     }
 }
