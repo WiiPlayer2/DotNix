@@ -74,6 +74,7 @@ public class ParityTest
             NixAttrs attrs => attrs.Items
                 .Select(kv => new KeyValuePair<string,object>(kv.Key, ToIntermediateValue(kv.Value)))
                 .ToDictionary(),
+            NixBool @bool => @bool.Value,
         };
     }
 }

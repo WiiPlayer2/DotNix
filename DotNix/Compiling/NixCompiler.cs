@@ -11,7 +11,7 @@ public class NixCompiler
         literal: Compile,
         list: x => Compile(scope, x),
         attrs: x => Compile(scope, x),
-        letBinding: x => Compile(scope, x),
+        letBinding: x => CompileLet(scope, x),
         identifier: x => Compile(scope, x),
         function: x => Compile(scope, x),
         apply: x => Compile(scope, x),
@@ -30,10 +30,13 @@ public class NixCompiler
             BinaryOperator.Minus => Op(Operators.Minus),
             BinaryOperator.Mul => Op(Operators.Mul),
             BinaryOperator.Div => Op(Operators.Div),
+            BinaryOperator.And => Op(Operators.And),
+            BinaryOperator.Or => Op(Operators.Or),
+            BinaryOperator.Impl => Op(Operators.Impl),
         };
 
         NixThunk Op(Func<NixValue2, NixValue2, NixValue2> fn) => new(
-            new(async () => fn(await aValue.Strict, await bValue.Strict)
+            new(async () => fn(await aValue.UnThunk, await bValue.UnThunk)
         ));
     }
 
@@ -43,6 +46,7 @@ public class NixCompiler
         return unaryOp.Operator.Operator switch
         {
             UnaryOperator.Negate => Op(Operators.Negate),
+            UnaryOperator.Not => Op(Operators.Not),
         };
 
         NixThunk Op(Func<NixValue2, NixValue2> fn) => new(
@@ -61,16 +65,18 @@ public class NixCompiler
             .ToDictionary()
     );
 
-    private static NixValue2 Compile(NixScope scope, NixExpr.LetBinding_ let)
+    private static NixValue2 CompileLet(NixScope scope, NixExpr.LetBinding_ let)
     {
-        var letScope = new NixScope(scope, let.Statements.Select(s => s.Match(
-            assign: assign => new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Compile(scope, assign.Expression)))
+        NixScope letScope = default!;
+        letScope = new NixScope(scope, let.Statements.Select(s => s.Match(
+            // ReSharper disable once AccessToModifiedClosure
+            assign: assign => new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Thunk(() => Compile(letScope, assign.Expression))))
         ).ToDictionary());
         return Compile(letScope, let.Expression);
     }
 
     private static NixValue2 Compile(NixScope scope, NixExpr.Identifier_ identifier) =>
-        scope.Get(identifier.Value.Text).IfNone(() => throw new Exception());
+        scope.Get(identifier.Value.Text).IfNone(() => throw new Exception($"{identifier.Value.Text} not in scope"));
 
     private static NixValue2 Compile(NixScope scope, NixExpr.Function_ function)
     {
@@ -110,4 +116,6 @@ public class NixCompiler
             return Compile(withScope, with.Expression);
         }));
     }
+
+    private static NixThunk Thunk(Func<NixValue2> fn) => new(new(() => Task.FromResult(fn())));
 }

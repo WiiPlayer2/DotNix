@@ -5,4 +5,5 @@ namespace DotNix.Parsing;
 public enum UnaryOperator
 {
     Negate,
+    Not,
 }

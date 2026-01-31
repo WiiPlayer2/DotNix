@@ -8,4 +8,7 @@ public enum BinaryOperator
     Minus,
     Mul,
     Div,
+    And,
+    Or,
+    Impl,
 }

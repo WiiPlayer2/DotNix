@@ -5,7 +5,9 @@ public record NixScope(Option<NixScope> Parent, IReadOnlyDictionary<string, NixV
     public static NixScope Empty => field ??= new(None, Map<string, NixValue2>());
 
     public static NixScope Default => field ??= new(None, Map<string, NixValue2>(
-        ("builtins", Builtins.AsAttrs)
+        ("builtins", Builtins.AsAttrs),
+        ("true", Builtins.True),
+        ("false", Builtins.False)
     ));
     
     public Option<NixValue2> Get(string name) =>
