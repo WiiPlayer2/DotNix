@@ -34,6 +34,7 @@ partial class NixParser
                 ">=",
                 "==",
                 "!=",
+                "?",
             ],
             ReservedNames: [
                 "let",
@@ -45,7 +46,7 @@ partial class NixParser
             IdentStart: either(letter, ch('_')),
             IdentLetter: either(alphaNum, oneOf("_'-")),
             
-            OpStart: oneOf("+-*/!&|<>="),
+            OpStart: oneOf("+-*/!&|<>=?"),
             OpLetter: oneOf("&|>=/+"),
             
             CaseSensitive: true
@@ -150,6 +151,12 @@ partial class NixParser
             buildExpressionParser(
                 [
                     [UnOp("-", UnaryOperator.Negate)], // 3
+                    [Operator.Infix<NixExpr>(
+                        Assoc.None,
+                        from _10 in reservedOp("?")
+                        from attrspath in lookAhead(Attrpath)
+                        select new Func<NixExpr, NixExpr, NixExpr>((a, _) => NixExpr.HasAttr(a, attrspath))
+                    )], // 4
                     [BinOp(Assoc.Right, "++", BinaryOperator.Concat)], // 5
                     [BinOp(Assoc.Left, "*", BinaryOperator.Mul), BinOp(Assoc.Left, "/", BinaryOperator.Div)], // 6
                     [BinOp(Assoc.Left, "+", BinaryOperator.Plus),BinOp(Assoc.Left, "-", BinaryOperator.Minus)], // 7

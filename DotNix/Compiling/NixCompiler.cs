@@ -16,7 +16,8 @@ public class NixCompiler
         function: x => Compile(scope, x),
         apply: x => Compile(scope, x),
         with: x => Compile(scope, x),
-        selection: x => CompileSelection(scope, x)
+        selection: x => CompileSelection(scope, x),
+        hasAttr: x => CompileHasAttr(scope, x)
     );
 
     private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value;
@@ -130,5 +131,11 @@ public class NixCompiler
     {
         var attrs = Compile(scope, selection.Expr);
         return Helper.Thunk(async () => ((NixAttrs) await attrs.UnThunk).Items[selection.AttrsPath.Identifier.Text]);
+    }
+
+    private static NixValue2 CompileHasAttr(NixScope scope, NixExpr.HasAttr_ hasAttr)
+    {
+        var attrs = Compile(scope, hasAttr.Expr);
+        return Helper.Thunk(async () => (NixBool) ((NixAttrs) await attrs.UnThunk).Items.ContainsKey(hasAttr.AttrsPath.Identifier.Text));
     }
 }
