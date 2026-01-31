@@ -1,3 +1,5 @@
+using DotNix.Types;
+
 namespace DotNix.Compiling;
 
 public static class Builtins

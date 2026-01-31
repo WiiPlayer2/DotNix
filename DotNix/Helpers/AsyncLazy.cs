@@ -1,6 +1,7 @@
+using System;
 using System.Runtime.CompilerServices;
 
-namespace DotNix.Compiling;
+namespace DotNix.Helpers;
 
 public class AsyncLazy<T> : Lazy<Task<T>>
 {

@@ -1,4 +1,5 @@
 using DotNix.Parsing;
+using DotNix.Types;
 using LanguageExt;
 
 namespace DotNix.Compiling;

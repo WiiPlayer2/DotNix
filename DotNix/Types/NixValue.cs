@@ -1,6 +1,8 @@
-using FunicularSwitch.Generators;
+using System;
+using DotNix.Compiling;
+using DotNix.Helpers;
 
-namespace DotNix.Compiling;
+namespace DotNix.Types;
 
 public abstract record NixValue : NixValueThunked
 {

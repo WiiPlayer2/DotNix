@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using DotNix.Compiling;
+using DotNix.Types;
 using LanguageExt.UnsafeValueAccess;
 using ExprP = LanguageExt.Parsec.Parser<DotNix.Parsing.NixExpr>;
 using KwP = LanguageExt.Parsec.Parser<string>;

@@ -5,6 +5,7 @@ using CliWrap;
 using CliWrap.Buffered;
 using DotNix.Compiling;
 using DotNix.Parsing;
+using DotNix.Types;
 using LanguageExt;
 using LanguageExt.Parsec;
 using Newtonsoft.Json;

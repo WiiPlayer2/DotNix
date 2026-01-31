@@ -1,4 +1,6 @@
-namespace DotNix.Compiling;
+using System;
+
+namespace DotNix.Types;
 
 public record NixInteger(long Value) : NixNumber
 {

@@ -1,3 +1,5 @@
+using DotNix.Types;
+
 namespace DotNix.Compiling;
 
 public record NixScope(Option<NixScope> Parent, IReadOnlyDictionary<string, NixValueThunked> Items)

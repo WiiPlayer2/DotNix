@@ -1,4 +1,8 @@
-namespace DotNix.Compiling;
+using System;
+using DotNix.Compiling;
+using DotNix.Helpers;
+
+namespace DotNix.Types;
 
 public record NixAttrs(IReadOnlyDictionary<string, NixValueThunked> Items) : NixValue
 {

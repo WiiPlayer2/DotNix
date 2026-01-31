@@ -1,4 +1,5 @@
 using System;
+using DotNix.Types;
 
 namespace DotNix.Compiling;
 

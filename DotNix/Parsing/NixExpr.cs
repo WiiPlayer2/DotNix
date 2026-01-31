@@ -1,5 +1,6 @@
 using System;
 using DotNix.Compiling;
+using DotNix.Types;
 using FunicularSwitch.Generators;
 
 namespace DotNix.Parsing;

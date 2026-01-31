@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using DotNix.Compiling;
 using DotNix.Parsing;
+using DotNix.Types;
 using LanguageExt;
 using LanguageExt.Parsec;
 using static LanguageExt.Prelude;
