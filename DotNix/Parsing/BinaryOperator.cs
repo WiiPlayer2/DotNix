@@ -11,4 +11,10 @@ public enum BinaryOperator
     And,
     Or,
     Impl,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
 }

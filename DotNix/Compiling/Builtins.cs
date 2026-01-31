@@ -7,7 +7,8 @@ public static class Builtins
         ("true", True),
         ("false", False),
         ("concatMap", ConcatMapFn),
-        ("map", MapFn)
+        ("map", MapFn),
+        ("mapAttrs", MapAttrsFn)
     ));
     
     private static NixFunction AddFn => OfType<NixNumber, NixNumber>(Add);
@@ -15,6 +16,8 @@ public static class Builtins
     private static NixFunction ConcatMapFn => OfType<NixFunction, NixList, NixList>(ConcatMap);
 
     private static NixFunction MapFn => OfType<NixFunction, NixList, NixList>(Map);
+    
+    private static NixFunction MapAttrsFn => OfType<NixFunction, NixAttrs, NixAttrs>(MapAttrs);
 
     public static NixBool True => NixBool.True;
     
@@ -54,6 +57,12 @@ public static class Builtins
 
     public static async Task<NixList> Map(NixFunction fn, NixList list) => new(
         await Task.WhenAll(list.Items.Select(async x => await fn.Fn(x)))
+    );
+
+    public static async Task<NixAttrs> MapAttrs(NixFunction fn, NixAttrs attrs) => new(
+        (await Task.WhenAll(
+            attrs.Items.Select(async kv => KeyValuePair.Create(kv.Key, await ((NixFunction)await (await fn.Fn(new NixString(kv.Key))).UnThunk).Fn(kv.Value)))
+        )).ToDictionary()
     );
     
     public static NixNumber Add(NixNumber a, NixNumber b) =>

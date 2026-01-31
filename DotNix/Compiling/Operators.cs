@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace DotNix.Compiling;
 
 public static class Operators
@@ -37,5 +39,41 @@ public static class Operators
         a switch
         {
             NixBool aInt => (NixBool) !(aInt.Value),
+        };
+
+    public static NixValue2 Equal(NixValue2 a, NixValue2 b) =>
+        (NixBool)(Compare(a, b) == 0);
+
+    public static NixValue2 NotEqual(NixValue2 a, NixValue2 b) =>
+        (NixBool)(Compare(a, b) != 0);
+
+    public static NixValue2 LessThan(NixValue2 a, NixValue2 b) =>
+        (NixBool)(Compare(a, b) < 0);
+
+    public static NixValue2 LessThanOrEqual(NixValue2 a, NixValue2 b) =>
+        (NixBool)(Compare(a, b) <= 0);
+
+    public static NixValue2 GreaterThan(NixValue2 a, NixValue2 b) =>
+        (NixBool)(Compare(a, b) > 0);
+
+    public static NixValue2 GreaterThanOrEqual(NixValue2 a, NixValue2 b) =>
+        (NixBool)(Compare(a, b) >= 0);
+
+    private static int? Compare(NixValue2 a, NixValue2 b) =>
+        a switch
+        {
+            NixInteger aInt => b switch
+            {
+                NixInteger bInt => Comparer.Default.Compare(aInt.Value, bInt.Value),
+                NixFloat bFloat => Comparer.Default.Compare((double) aInt.Value, bFloat.Value),
+                _ => null,
+            },
+            NixFloat aFloat => b switch
+            {
+                NixInteger bInt => Comparer.Default.Compare(aFloat.Value, (double) bInt.Value),
+                NixFloat bFloat => Comparer.Default.Compare(aFloat.Value, bFloat.Value),
+                _ => null,
+            },
+            _ => null,
         };
 }

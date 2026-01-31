@@ -33,6 +33,12 @@ public class NixCompiler
             BinaryOperator.And => Op(Operators.And),
             BinaryOperator.Or => Op(Operators.Or),
             BinaryOperator.Impl => Op(Operators.Impl),
+            BinaryOperator.Equal => Op(Operators.Equal),
+            BinaryOperator.NotEqual => Op(Operators.NotEqual),
+            BinaryOperator.LessThan => Op(Operators.LessThan),
+            BinaryOperator.LessThanOrEqual => Op(Operators.LessThanOrEqual),
+            BinaryOperator.GreaterThan => Op(Operators.GreaterThan),
+            BinaryOperator.GreaterThanOrEqual => Op(Operators.GreaterThanOrEqual),
         };
 
         NixThunk Op(Func<NixValue2, NixValue2, NixValue2> fn) => new(

@@ -139,6 +139,8 @@ partial class NixParser
                     [BinOp(Assoc.Left, "*", BinaryOperator.Mul), BinOp(Assoc.Left, "/", BinaryOperator.Div)], // 6
                     [BinOp(Assoc.Left, "+", BinaryOperator.Plus),BinOp(Assoc.Left, "-", BinaryOperator.Minus)], // 7
                     [UnOp("!", UnaryOperator.Not)], // 8
+                    [BinOp(Assoc.None, "<", BinaryOperator.LessThan), BinOp(Assoc.None, "<=", BinaryOperator.LessThanOrEqual), BinOp(Assoc.None, ">", BinaryOperator.GreaterThan), BinOp(Assoc.None, ">=", BinaryOperator.GreaterThanOrEqual)], // 10
+                    [BinOp(Assoc.None, "==", BinaryOperator.Equal), BinOp(Assoc.None, "!=", BinaryOperator.NotEqual)], // 11
                     [BinOp(Assoc.Left, "&&", BinaryOperator.And)], // 12
                     [BinOp(Assoc.Left, "||", BinaryOperator.Or)], // 13
                     [BinOp(Assoc.Right, "->", BinaryOperator.Impl)], // 14
