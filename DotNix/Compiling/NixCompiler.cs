@@ -6,24 +6,24 @@ namespace DotNix.Compiling;
 public class NixCompiler
 {
     public static NixValue2 Compile(NixScope scope, NixExpr expr) => expr.Match(
-        unaryOp: x => Compile(scope, x),
-        binaryOp: x => Compile(scope, x),
-        literal: Compile,
-        list: x => Compile(scope, x),
-        attrs: x => Compile(scope, x),
+        unaryOp: x => CompileUnaryOp(scope, x),
+        binaryOp: x => CompileBinaryOp(scope, x),
+        literal: CompileLiteral,
+        list: x => CompileList(scope, x),
+        attrs: x => CompileAttrs(scope, x),
         letBinding: x => CompileLet(scope, x),
-        identifier: x => Compile(scope, x),
-        function: x => Compile(scope, x),
-        apply: x => Compile(scope, x),
-        with: x => Compile(scope, x),
+        identifier: x => CompileIdentifier(scope, x),
+        function: x => CompileFunction(scope, x),
+        apply: x => CompileApply(scope, x),
+        with: x => CompileWith(scope, x),
         selection: x => CompileSelection(scope, x),
         hasAttr: x => CompileHasAttr(scope, x),
         @if: x => CompileIf(scope, x)
     );
 
-    private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value;
+    private static NixValue2 CompileLiteral(NixExpr.Literal_ literalExpr) => literalExpr.Value;
 
-    private static NixThunk Compile(NixScope scope, NixExpr.BinaryOp_ binaryOp)
+    private static NixThunk CompileBinaryOp(NixScope scope, NixExpr.BinaryOp_ binaryOp)
     {
         var aValue = Compile(scope, binaryOp.Left);
         var bValue = Compile(scope, binaryOp.Right);
@@ -51,7 +51,7 @@ public class NixCompiler
         ));
     }
 
-    private static NixThunk Compile(NixScope scope, NixExpr.UnaryOp_ unaryOp)
+    private static NixThunk CompileUnaryOp(NixScope scope, NixExpr.UnaryOp_ unaryOp)
     {
         var aValue = Compile(scope, unaryOp.Expr);
         return unaryOp.Operator.Operator switch
@@ -65,9 +65,9 @@ public class NixCompiler
         );
     }
 
-    private static NixList Compile(NixScope scope, NixExpr.List_ list) => new(list.Items.Select(x => Compile(scope, x)).ToList());
+    private static NixList CompileList(NixScope scope, NixExpr.List_ list) => new(list.Items.Select(x => Compile(scope, x)).ToList());
 
-    private static NixAttrs Compile(NixScope scope, NixExpr.Attrs_ attrs) => new(
+    private static NixAttrs CompileAttrs(NixScope scope, NixExpr.Attrs_ attrs) => new(
         attrs.Statements
             .Select(x => x.Match(
                 assign: assign =>
@@ -86,10 +86,10 @@ public class NixCompiler
         return Compile(letScope, let.Expression);
     }
 
-    private static NixValue2 Compile(NixScope scope, NixExpr.Identifier_ identifier) =>
+    private static NixValue2 CompileIdentifier(NixScope scope, NixExpr.Identifier_ identifier) =>
         scope.Get(identifier.Value.Text).IfNone(() => throw new Exception($"{identifier.Value.Text} not in scope"));
 
-    private static NixValue2 Compile(NixScope scope, NixExpr.Function_ function)
+    private static NixValue2 CompileFunction(NixScope scope, NixExpr.Function_ function)
     {
         return new NixFunction(arg =>
         {
@@ -101,7 +101,7 @@ public class NixCompiler
         });
     }
 
-    private static NixValue2 Compile(NixScope scope, NixExpr.Apply_ apply)
+    private static NixValue2 CompileApply(NixScope scope, NixExpr.Apply_ apply)
     {
         var func = Compile(scope, apply.Func);
         var arg = Compile(scope, apply.Arg);
@@ -112,7 +112,7 @@ public class NixCompiler
         }));
     }
 
-    private static NixValue2 Compile(NixScope scope, NixExpr.With_ with)
+    private static NixValue2 CompileWith(NixScope scope, NixExpr.With_ with)
     {
         return new NixThunk(new AsyncLazy<NixValue2>(async () =>
         {

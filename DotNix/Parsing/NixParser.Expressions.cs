@@ -134,7 +134,6 @@ partial class NixParser
                 // formal_set '@' ID ':' expr_function[body]
                 // ID '@' formal_set ':' expr_function[body]
                 // ASSERT expr ';' expr_function
-                // WITH expr ';' expr_function
                 from _10 in WITH
                 from bindExpr in Expr
                 from _30 in Tokens.Semi
@@ -150,7 +149,6 @@ partial class NixParser
 
         public static ExprP ExprIf => field ??=
             choice((ExprP[]) [
-                // IF expr THEN expr ELSE expr
                 from _10 in IF
                 from exprIf in Expr
                 from _20 in THEN
@@ -231,7 +229,6 @@ partial class NixParser
                 from binds in Binds
                 from _30 in Tokens.Symbol("}")
                 select NixExpr.Attrs(toList(binds)),
-                // '{' '}'
                 from _10 in Tokens.Symbol("[")
                 from list in List
                 from _30 in Tokens.Symbol("]")
