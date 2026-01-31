@@ -1,3 +1,3 @@
 namespace DotNix.Compiling;
 
-public record NixFunction(NixFunc Fn) : NixValue2;
+public record NixFunction(NixFunc Fn) : NixValueStrict;

@@ -1,8 +1,8 @@
 namespace DotNix.Compiling;
 
-public record NixThunk(AsyncLazy<NixValue2> LazyValue) : NixValue2
+public record NixThunk(AsyncLazy<NixValueThunked> LazyValue) : NixValueThunked
 {
-    public override AsyncLazy<NixValue2> Strict { get; } = new(async () => await (await LazyValue).Strict);
+    public override AsyncLazy<NixValueStrict> Strict { get; } = new(async () => await (await LazyValue).Strict);
 
-    public override AsyncLazy<NixValue2> UnThunk { get; } = new(async () => await (await LazyValue).UnThunk);
+    public override AsyncLazy<NixValue> UnThunk { get; } = new(async () => await (await LazyValue).UnThunk);
 }

@@ -7,7 +7,7 @@ namespace DotNix.Parsing;
 [UnionType]
 public abstract partial record NixExpr
 {
-    public record Literal_(NixValue2 Value) : NixExpr;
+    public record Literal_(NixValue Value) : NixExpr;
 
     public record BinaryOp_(BinaryOperatorSymbol Operator, NixExpr Left, NixExpr Right) : NixExpr;
     

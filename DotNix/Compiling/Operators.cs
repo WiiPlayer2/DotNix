@@ -4,15 +4,15 @@ namespace DotNix.Compiling;
 
 public static class Operators
 {
-    public static NixValue2 Plus(NixValue2 a, NixValue2 b) => Builtins.Add((NixNumber)a, (NixNumber)b);
+    public static NixValue Plus(NixValue a, NixValue b) => Builtins.Add((NixNumber)a, (NixNumber)b);
 
-    public static NixValue2 Minus(NixValue2 a, NixValue2 b) => Builtins.Sub((NixNumber)a, (NixNumber)b);
+    public static NixValue Minus(NixValue a, NixValue b) => Builtins.Sub((NixNumber)a, (NixNumber)b);
     
-    public static NixValue2 Mul(NixValue2 a, NixValue2 b) => Builtins.Mul((NixNumber)a, (NixNumber)b);
+    public static NixValue Mul(NixValue a, NixValue b) => Builtins.Mul((NixNumber)a, (NixNumber)b);
     
-    public static NixValue2 Div(NixValue2 a, NixValue2 b) => Builtins.Div((NixNumber)a, (NixNumber)b);
+    public static NixValue Div(NixValue a, NixValue b) => Builtins.Div((NixNumber)a, (NixNumber)b);
 
-    public static NixValue2 Negate(NixValue2 a) =>
+    public static NixValue Negate(NixValue a) =>
         a switch
         {
             NixInteger aInt => new NixInteger(-aInt.Value),
@@ -20,13 +20,13 @@ public static class Operators
             _ => throw new NotSupportedException(),
         };
 
-    public static NixValue2 And(NixValue2 a, NixValue2 b) => BoolOp(a, b, (a, b) => a && b);
+    public static NixValue And(NixValue a, NixValue b) => BoolOp(a, b, (a, b) => a && b);
     
-    public static NixValue2 Or(NixValue2 a, NixValue2 b) => BoolOp(a, b, (a, b) => a || b);
+    public static NixValue Or(NixValue a, NixValue b) => BoolOp(a, b, (a, b) => a || b);
     
-    public static NixValue2 Impl(NixValue2 a, NixValue2 b) => BoolOp(a, b, (a, b) => !a || b);
+    public static NixValue Impl(NixValue a, NixValue b) => BoolOp(a, b, (a, b) => !a || b);
     
-    private static NixBool BoolOp(NixValue2 a, NixValue2 b, Func<bool, bool, bool> fn) =>
+    private static NixBool BoolOp(NixValue a, NixValue b, Func<bool, bool, bool> fn) =>
         a switch
         {
             NixBool aBool => b switch
@@ -35,31 +35,31 @@ public static class Operators
             },
         };
 
-    public static NixValue2 Not(NixValue2 a) =>
+    public static NixValue Not(NixValue a) =>
         a switch
         {
             NixBool aInt => (NixBool) !(aInt.Value),
         };
 
-    public static NixValue2 Equal(NixValue2 a, NixValue2 b) =>
+    public static NixValue Equal(NixValue a, NixValue b) =>
         (NixBool)(Compare(a, b) == 0);
 
-    public static NixValue2 NotEqual(NixValue2 a, NixValue2 b) =>
+    public static NixValue NotEqual(NixValue a, NixValue b) =>
         (NixBool)(Compare(a, b) != 0);
 
-    public static NixValue2 LessThan(NixValue2 a, NixValue2 b) =>
+    public static NixValue LessThan(NixValue a, NixValue b) =>
         (NixBool)(Compare(a, b) < 0);
 
-    public static NixValue2 LessThanOrEqual(NixValue2 a, NixValue2 b) =>
+    public static NixValue LessThanOrEqual(NixValue a, NixValue b) =>
         (NixBool)(Compare(a, b) <= 0);
 
-    public static NixValue2 GreaterThan(NixValue2 a, NixValue2 b) =>
+    public static NixValue GreaterThan(NixValue a, NixValue b) =>
         (NixBool)(Compare(a, b) > 0);
 
-    public static NixValue2 GreaterThanOrEqual(NixValue2 a, NixValue2 b) =>
+    public static NixValue GreaterThanOrEqual(NixValue a, NixValue b) =>
         (NixBool)(Compare(a, b) >= 0);
 
-    private static int? Compare(NixValue2 a, NixValue2 b) =>
+    private static int? Compare(NixValue a, NixValue b) =>
         a switch
         {
             NixInteger aInt => b switch
@@ -77,7 +77,7 @@ public static class Operators
             _ => null,
         };
 
-    public static NixValue2 Concat(NixValue2 a, NixValue2 b) => Helper.Thunk(async () =>
+    public static NixValueThunked Concat(NixValue a, NixValue b) => Helper.Thunk(async () =>
     {
         var aList = (NixList) await a.UnThunk;
         var bList = (NixList) await b.UnThunk;
@@ -85,7 +85,7 @@ public static class Operators
         return new NixList(items);
     });
 
-    public static NixValue2 Update(NixValue2 a, NixValue2 b) => Helper.Thunk(async () =>
+    public static NixValueThunked Update(NixValue a, NixValue b) => Helper.Thunk(async () =>
     {
         var aAttrs = (NixAttrs) await a.UnThunk;
         var bAttrs = (NixAttrs) await b.UnThunk;

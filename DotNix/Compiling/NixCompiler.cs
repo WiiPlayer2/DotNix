@@ -5,7 +5,7 @@ namespace DotNix.Compiling;
 
 public class NixCompiler
 {
-    public static NixValue2 Compile(NixScope scope, NixExpr expr) => expr.Match(
+    public static NixValueThunked Compile(NixScope scope, NixExpr expr) => expr.Match(
         unaryOp: x => CompileUnaryOp(scope, x),
         binaryOp: x => CompileBinaryOp(scope, x),
         literal: CompileLiteral,
@@ -21,7 +21,7 @@ public class NixCompiler
         @if: x => CompileIf(scope, x)
     );
 
-    private static NixValue2 CompileLiteral(NixExpr.Literal_ literalExpr) => literalExpr.Value;
+    private static NixValue CompileLiteral(NixExpr.Literal_ literalExpr) => literalExpr.Value;
 
     private static NixThunk CompileBinaryOp(NixScope scope, NixExpr.BinaryOp_ binaryOp)
     {
@@ -46,7 +46,7 @@ public class NixCompiler
             BinaryOperator.Update => Op(Operators.Update),
         };
 
-        NixThunk Op(Func<NixValue2, NixValue2, NixValue2> fn) => new(
+        NixThunk Op(Func<NixValue, NixValue, NixValueThunked> fn) => new(
             new(async () => fn(await aValue.UnThunk, await bValue.UnThunk)
         ));
     }
@@ -60,7 +60,7 @@ public class NixCompiler
             UnaryOperator.Not => Op(Operators.Not),
         };
 
-        NixThunk Op(Func<NixValue2, NixValue2> fn) => new(
+        NixThunk Op(Func<NixValue, NixValue> fn) => new(
             new(async () => fn(await aValue.Strict))
         );
     }
@@ -71,29 +71,29 @@ public class NixCompiler
         attrs.Statements
             .Select(x => x.Match(
                 assign: assign =>
-                    new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Compile(scope, assign.Expression))
+                    new KeyValuePair<string, NixValueThunked>(assign.Path.Identifier.Text, Compile(scope, assign.Expression))
             ))
             .ToDictionary()
     );
 
-    private static NixValue2 CompileLet(NixScope scope, NixExpr.LetBinding_ let)
+    private static NixValueThunked CompileLet(NixScope scope, NixExpr.LetBinding_ let)
     {
         NixScope letScope = default!;
         letScope = new NixScope(scope, let.Statements.Select(s => s.Match(
             // ReSharper disable once AccessToModifiedClosure
-            assign: assign => new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Helper.Thunk(() => Compile(letScope, assign.Expression))))
+            assign: assign => new KeyValuePair<string, NixValueThunked>(assign.Path.Identifier.Text, Helper.Thunk(() => Compile(letScope, assign.Expression))))
         ).ToDictionary());
         return Compile(letScope, let.Expression);
     }
 
-    private static NixValue2 CompileIdentifier(NixScope scope, NixExpr.Identifier_ identifier) =>
+    private static NixValueThunked CompileIdentifier(NixScope scope, NixExpr.Identifier_ identifier) =>
         scope.Get(identifier.Value.Text).IfNone(() => throw new Exception($"{identifier.Value.Text} not in scope"));
 
-    private static NixValue2 CompileFunction(NixScope scope, NixExpr.Function_ function)
+    private static NixValue CompileFunction(NixScope scope, NixExpr.Function_ function)
     {
         return new NixFunction(arg =>
         {
-            var fnScope = new NixScope(scope, function.Arg.Match<IReadOnlyDictionary<string, NixValue2>>(
+            var fnScope = new NixScope(scope, function.Arg.Match<IReadOnlyDictionary<string, NixValueThunked>>(
                 simple: simple => Map((simple.Name.Text, arg))
             ));
             var result = Compile(fnScope, function.Body);
@@ -101,7 +101,7 @@ public class NixCompiler
         });
     }
 
-    private static NixValue2 CompileApply(NixScope scope, NixExpr.Apply_ apply)
+    private static NixValueThunked CompileApply(NixScope scope, NixExpr.Apply_ apply)
     {
         var func = Compile(scope, apply.Func);
         var arg = Compile(scope, apply.Arg);
@@ -112,35 +112,39 @@ public class NixCompiler
         }));
     }
 
-    private static NixValue2 CompileWith(NixScope scope, NixExpr.With_ with)
+    private static NixValueThunked CompileWith(NixScope scope, NixExpr.With_ with)
     {
-        return new NixThunk(new AsyncLazy<NixValue2>(async () =>
+        return new NixThunk(new(async () =>
         {
-            var bindValue = await Compile(scope, with.BindExpr).Strict; // TODO need .Unthunk or similar
-            if (bindValue is not NixAttrs bindAttrs)
-                throw new InvalidOperationException();
+            var bindValue = await Compile(scope, with.BindExpr).UnThunk;
+            var items = bindValue switch
+            {
+                NixAttrs bindAttrs => bindAttrs.Items,
+                NixAttrsStrict bindAttrsStrict => bindAttrsStrict.ToUnstrict().Items,
+                _ => throw new InvalidOperationException(),
+            };
             
             var withScope = new NixScope(
                 scope,
-                bindAttrs.Items
+                items
             );
             return Compile(withScope, with.Expression);
         }));
     }
 
-    private static NixValue2 CompileSelection(NixScope scope, NixExpr.Selection_ selection)
+    private static NixValueThunked CompileSelection(NixScope scope, NixExpr.Selection_ selection)
     {
         var attrs = Compile(scope, selection.Expr);
         return Helper.Thunk(async () => ((NixAttrs) await attrs.UnThunk).Items[selection.AttrsPath.Identifier.Text]);
     }
 
-    private static NixValue2 CompileHasAttr(NixScope scope, NixExpr.HasAttr_ hasAttr)
+    private static NixValueThunked CompileHasAttr(NixScope scope, NixExpr.HasAttr_ hasAttr)
     {
         var attrs = Compile(scope, hasAttr.Expr);
         return Helper.Thunk(async () => (NixBool) ((NixAttrs) await attrs.UnThunk).Items.ContainsKey(hasAttr.AttrsPath.Identifier.Text));
     }
 
-    private static NixValue2 CompileIf(NixScope scope, NixExpr.If_ @if)
+    private static NixValueThunked CompileIf(NixScope scope, NixExpr.If_ @if)
     {
         var cond = Compile(scope, @if.IfCond);
         return Helper.Thunk(async () => ((NixBool) await cond.UnThunk).Value ? Compile(scope, @if.Then) : Compile(scope, @if.Else));

@@ -1,6 +1,6 @@
 namespace DotNix.Compiling;
 
-public record NixBool : NixValue2
+public record NixBool : NixValueStrict
 {
     public static NixBool True => field ??= new(true);
     

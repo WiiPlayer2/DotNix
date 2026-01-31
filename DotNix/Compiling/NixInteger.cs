@@ -7,4 +7,4 @@ public record NixInteger(long Value) : NixNumber
 
 public record NixFloat(double Value) : NixNumber;
 
-public abstract record NixNumber : NixValue2;
+public abstract record NixNumber : NixValueStrict;

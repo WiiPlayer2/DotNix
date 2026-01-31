@@ -1,3 +1,3 @@
 namespace DotNix.Compiling;
 
-public record NixString(string Value) : NixValue2;
+public record NixString(string Value) : NixValueStrict;

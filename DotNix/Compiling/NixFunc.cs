@@ -1,3 +1,3 @@
 namespace DotNix.Compiling;
 
-public delegate Task<NixValue2> NixFunc(NixValue2 arg);
+public delegate Task<NixValueThunked> NixFunc(NixValueThunked arg);

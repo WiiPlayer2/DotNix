@@ -10,7 +10,7 @@ namespace DotNix;
 
 public static class Nix
 {
-    public static async Task<NixValue2> EvalExpr(string code)
+    public static async Task<NixValueStrict> EvalExpr(string code)
     {
         var expr = NixParser.Parse(code);
         var lazyValue = NixCompiler.Compile(NixScope.Default, expr);

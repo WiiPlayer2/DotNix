@@ -62,16 +62,16 @@ public class ParityTest
         Directory.EnumerateFiles("./tests")
             .Select(x => new object[] { new FileInfo(x).Name });
 
-    private static JToken? ToJson(NixValue2 value)
+    private static JToken? ToJson(NixValueStrict value)
     {
         return JsonConvert.DeserializeObject<JToken?>(JsonConvert.SerializeObject(ToIntermediateValue(value)));
 
-        static object ToIntermediateValue(NixValue2 value) => value switch
+        static object ToIntermediateValue(NixValueStrict value) => value switch
         {
             NixInteger integer => integer.Value,
-            NixList list => list.Items.Select(ToIntermediateValue),
+            NixListStrict list => list.Items.Select(ToIntermediateValue),
             NixFloat @float => @float.Value,
-            NixAttrs attrs => attrs.Items
+            NixAttrsStrict attrs => attrs.Items
                 .Select(kv => new KeyValuePair<string,object>(kv.Key, ToIntermediateValue(kv.Value)))
                 .ToDictionary(),
             NixBool @bool => @bool.Value,

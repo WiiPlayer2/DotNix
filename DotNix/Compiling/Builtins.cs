@@ -2,7 +2,7 @@ namespace DotNix.Compiling;
 
 public static class Builtins
 {
-    public static NixAttrs AsAttrs => field ??= new NixAttrs(Map<string, NixValue2>(
+    public static NixAttrsStrict AsAttrs => field ??= new NixAttrsStrict(Map<string, NixValueStrict>(
         ("add", AddFn),
         ("true", True),
         ("false", False),
@@ -23,19 +23,19 @@ public static class Builtins
     
     public static NixBool False => NixBool.False;
 
-    private static NixFunction OfType<A, B>(Func<A, B, NixValue2> fn)
-        where A : NixValue2
-        where B : NixValue2
+    private static NixFunction OfType<A, B>(Func<A, B, NixValue> fn)
+        where A : NixValue
+        where B : NixValue
         => OfType((A a) => OfType((B b) => fn(a, b)));
 
     private static NixFunction OfType<A, B, C>(Func<A, B, Task<C>> fn)
-        where A : NixValue2
-        where B : NixValue2
-        where C : NixValue2
+        where A : NixValue
+        where B : NixValue
+        where C : NixValue
         => OfType((A a) => OfType((B b) => fn(a, b)));
 
-    private static NixFunction OfType<A>(Func<A, NixValue2> fn)
-        where A : NixValue2
+    private static NixFunction OfType<A>(Func<A, NixValue> fn)
+        where A : NixValue
         => new(async arg =>
             (await arg.UnThunk) is not A argTyped
                 ? throw new NotSupportedException()
@@ -43,8 +43,8 @@ public static class Builtins
         );
     
     private static NixFunction OfType<A, B>(Func<A, Task<B>> fn)
-        where A : NixValue2
-        where B : NixValue2
+        where A : NixValue
+        where B : NixValue
         => new(async arg =>
             (await arg.UnThunk) is not A argTyped
                 ? throw new NotSupportedException()
