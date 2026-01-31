@@ -78,21 +78,21 @@ public static class Operators
             _ => null,
         };
 
-    public static NixValueThunked Concat(NixValue a, NixValue b) => Helper.Thunk(async () =>
+    public static NixValue Concat(NixValue a, NixValue b)
     {
-        var aList = (NixList) await a.UnThunk;
-        var bList = (NixList) await b.UnThunk;
+        var aList = (NixList) a;
+        var bList = (NixList) b;
         var items = aList.Items.Concat(bList.Items).ToList();
         return new NixList(items);
-    });
+    }
 
-    public static NixValueThunked Update(NixValue a, NixValue b) => Helper.Thunk(async () =>
+    public static NixValue Update(NixValue a, NixValue b)
     {
-        var aAttrs = (NixAttrs) await a.UnThunk;
-        var bAttrs = (NixAttrs) await b.UnThunk;
+        var aAttrs = (NixAttrs) a;
+        var bAttrs = (NixAttrs) b;
         var items = aAttrs.Items.ToDictionary();
         foreach (var item in bAttrs.Items.ToDictionary())
             items[item.Key] = item.Value;
         return new NixAttrs(items);
-    });
+    }
 }

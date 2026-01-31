@@ -6,10 +6,10 @@ public record NixScope(Option<NixScope> Parent, IReadOnlyDictionary<string, NixV
 {
     public static NixScope Empty => field ??= new(None, Map<string, NixValueThunked>());
 
-    public static NixScope Default => field ??= new(None, Map<string, NixValueThunked>(
-        ("builtins", Builtins.AsAttrs),
-        ("true", Builtins.True),
-        ("false", Builtins.False)
+    public static NixScope Default => field ??= new(None, Map(
+        ("builtins", NixValueThunked.Value(Builtins.AsAttrs)),
+        ("true", NixValueThunked.Value(Builtins.True)),
+        ("false", NixValueThunked.Value(Builtins.False))
     ));
     
     public Option<NixValueThunked> Get(string name) =>

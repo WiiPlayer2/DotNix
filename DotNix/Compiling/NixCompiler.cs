@@ -22,7 +22,7 @@ public class NixCompiler
         @if: x => CompileIf(scope, x)
     );
 
-    private static NixValue CompileLiteral(NixExpr.Literal_ literalExpr) => literalExpr.Value;
+    private static NixValueThunked CompileLiteral(NixExpr.Literal_ literalExpr) => NixValueThunked.Value(literalExpr.Value);
 
     private static NixThunk CompileBinaryOp(NixScope scope, NixExpr.BinaryOp_ binaryOp)
     {
@@ -47,8 +47,8 @@ public class NixCompiler
             BinaryOperator.Update => Op(Operators.Update),
         };
 
-        NixThunk Op(Func<NixValue, NixValue, NixValueThunked> fn) => new(
-            new(async () => fn(await aValue.UnThunk, await bValue.UnThunk)
+        NixThunk Op(Func<NixValue, NixValue, NixValue> fn) => new(
+            new(async () => NixValueThunked.Value(fn(await aValue.UnThunk, await bValue.UnThunk))
         ));
     }
 
@@ -62,20 +62,21 @@ public class NixCompiler
         };
 
         NixThunk Op(Func<NixValue, NixValue> fn) => new(
-            new(async () => fn(await aValue.Strict))
+            new(async () => NixValueThunked.Value(fn(await aValue.Strict)))
         );
     }
 
-    private static NixList CompileList(NixScope scope, NixExpr.List_ list) => new(list.Items.Select(x => Compile(scope, x)).ToList());
+    private static NixValueThunked CompileList(NixScope scope, NixExpr.List_ list) =>
+        NixValueThunked.Value(new NixList(list.Items.Select(x => Compile(scope, x)).ToList()));
 
-    private static NixAttrs CompileAttrs(NixScope scope, NixExpr.Attrs_ attrs) => new(
+    private static NixValueThunked CompileAttrs(NixScope scope, NixExpr.Attrs_ attrs) => NixValueThunked.Value(new NixAttrs(
         attrs.Statements
             .Select(x => x.Match(
                 assign: assign =>
                     new KeyValuePair<string, NixValueThunked>(assign.Path.Identifier.Text, Compile(scope, assign.Expression))
             ))
             .ToDictionary()
-    );
+    ));
 
     private static NixValueThunked CompileLet(NixScope scope, NixExpr.LetBinding_ let)
     {
@@ -90,17 +91,15 @@ public class NixCompiler
     private static NixValueThunked CompileIdentifier(NixScope scope, NixExpr.Identifier_ identifier) =>
         scope.Get(identifier.Value.Text).IfNone(() => throw new Exception($"{identifier.Value.Text} not in scope"));
 
-    private static NixValue CompileFunction(NixScope scope, NixExpr.Function_ function)
-    {
-        return new NixFunction(arg =>
+    private static NixValueThunked CompileFunction(NixScope scope, NixExpr.Function_ function) =>
+        NixValueThunked.Value(new NixFunction(arg =>
         {
             var fnScope = new NixScope(scope, function.Arg.Match<IReadOnlyDictionary<string, NixValueThunked>>(
                 simple: simple => Map((simple.Name.Text, arg))
             ));
             var result = Compile(fnScope, function.Body);
             return Task.FromResult(result);
-        });
-    }
+        }));
 
     private static NixValueThunked CompileApply(NixScope scope, NixExpr.Apply_ apply)
     {
@@ -142,7 +141,7 @@ public class NixCompiler
     private static NixValueThunked CompileHasAttr(NixScope scope, NixExpr.HasAttr_ hasAttr)
     {
         var attrs = Compile(scope, hasAttr.Expr);
-        return Helper.Thunk(async () => (NixBool) ((NixAttrs) await attrs.UnThunk).Items.ContainsKey(hasAttr.AttrsPath.Identifier.Text));
+        return Helper.Thunk(async () => NixValueThunked.Value((NixBool) ((NixAttrs) await attrs.UnThunk).Items.ContainsKey(hasAttr.AttrsPath.Identifier.Text)));
     }
 
     private static NixValueThunked CompileIf(NixScope scope, NixExpr.If_ @if)

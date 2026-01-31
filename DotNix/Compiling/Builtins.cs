@@ -41,7 +41,7 @@ public static class Builtins
         => new(async arg =>
             (await arg.UnThunk) is not A argTyped
                 ? throw new NotSupportedException()
-                : fn(argTyped)
+                : NixValueThunked.Value(fn(argTyped))
         );
     
     private static NixFunction OfType<A, B>(Func<A, Task<B>> fn)
@@ -50,7 +50,7 @@ public static class Builtins
         => new(async arg =>
             (await arg.UnThunk) is not A argTyped
                 ? throw new NotSupportedException()
-                : await fn(argTyped)
+                : NixValueThunked.Value(await fn(argTyped))
         );
 
     public static async Task<NixList> ConcatMap(NixFunction fn, NixList list) => new(
@@ -63,7 +63,7 @@ public static class Builtins
 
     public static async Task<NixAttrs> MapAttrs(NixFunction fn, NixAttrs attrs) => new(
         (await Task.WhenAll(
-            attrs.Items.Select(async kv => KeyValuePair.Create(kv.Key, await ((NixFunction)await (await fn.Fn(new NixString(kv.Key))).UnThunk).Fn(kv.Value)))
+            attrs.Items.Select(async kv => KeyValuePair.Create(kv.Key, await ((NixFunction)await (await fn.Fn(NixValueThunked.Value(new NixString(kv.Key)))).UnThunk).Fn(kv.Value)))
         )).ToDictionary()
     );
     

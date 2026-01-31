@@ -21,5 +21,5 @@ public record NixAttrs(IReadOnlyDictionary<string, NixValueThunked> Items) : Nix
 public record NixAttrsStrict(IReadOnlyDictionary<string, NixValueStrict> Items) : NixValueStrict
 {
     public NixAttrs ToUnstrict() =>
-        new(Items.ToDictionary(x => x.Key, NixValueThunked (x) => x.Value));
+        new(Items.ToDictionary(x => x.Key, x => NixValueThunked.Value(x.Value)));
 }
