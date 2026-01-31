@@ -17,4 +17,6 @@ public enum BinaryOperator
     LessThanOrEqual,
     GreaterThan,
     GreaterThanOrEqual,
+    Update,
+    Concat,
 }

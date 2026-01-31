@@ -26,4 +26,6 @@ public abstract partial record NixExpr
     public record Apply_(NixExpr Func, NixExpr Arg) : NixExpr;
     
     public record With_(NixExpr BindExpr,  NixExpr Expression) : NixExpr;
+    
+    public record Selection_(NixExpr Expr, NixAttrsPath AttrsPath) : NixExpr;
 }

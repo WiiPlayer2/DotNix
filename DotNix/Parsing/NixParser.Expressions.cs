@@ -18,22 +18,35 @@ partial class NixParser
             NestedComments: false,
             
             ReservedOpNames: [
+                "//",
+                "++",
                 "+",
                 "-",
                 "*",
                 "/",
+                "!",
+                "&&",
+                "||",
+                "->",
+                "<",
+                "<=",
+                ">",
+                ">=",
+                "==",
+                "!=",
             ],
             ReservedNames: [
                 "let",
                 "in",
                 "or",
+                "with",
             ],
             
             IdentStart: either(letter, ch('_')),
             IdentLetter: either(alphaNum, oneOf("_'-")),
             
-            // OpStart: oneOf("+-*/"),
-            // OpLetter: oneOf("+-*/"),
+            OpStart: oneOf("+-*/!&|<>="),
+            OpLetter: oneOf("&|>=/+"),
             
             CaseSensitive: true
         );
@@ -74,7 +87,7 @@ partial class NixParser
         private static KwP OR_KW => field ??= keyword("or");
         
         private static KwP WITH => field ??= keyword("with");
-        
+
         private static Parser<NixInteger> INT_LIT => field ??=
             from n in Tokens.Integer
             select new NixInteger(n);
@@ -83,13 +96,14 @@ partial class NixParser
             from n in Tokens.Float
             select new NixFloat(n);
 
-        private static Parser<NixNumber> NUMBER_LIT => field ??=
+        private static Parser<NixNumber> NUMBER_LIT => field ??= Tokens.Lexeme(attempt(
             from _10 in notFollowedBy(either(reservedOp("-"), reservedOp("+")))
             from n in debug(Tokens.NaturalOrFloat, "number")
             select n.Match<NixNumber>(
                 i => new NixInteger(i),
                 f => new NixFloat(f)
-            );
+            )
+        ));
 
         public static ExprP Start => field ??=
             from expr in Expr
@@ -136,9 +150,11 @@ partial class NixParser
             buildExpressionParser(
                 [
                     [UnOp("-", UnaryOperator.Negate)], // 3
+                    [BinOp(Assoc.Right, "++", BinaryOperator.Concat)], // 5
                     [BinOp(Assoc.Left, "*", BinaryOperator.Mul), BinOp(Assoc.Left, "/", BinaryOperator.Div)], // 6
                     [BinOp(Assoc.Left, "+", BinaryOperator.Plus),BinOp(Assoc.Left, "-", BinaryOperator.Minus)], // 7
                     [UnOp("!", UnaryOperator.Not)], // 8
+                    [BinOp(Assoc.Right, "//", BinaryOperator.Update)],
                     [BinOp(Assoc.None, "<", BinaryOperator.LessThan), BinOp(Assoc.None, "<=", BinaryOperator.LessThanOrEqual), BinOp(Assoc.None, ">", BinaryOperator.GreaterThan), BinOp(Assoc.None, ">=", BinaryOperator.GreaterThanOrEqual)], // 10
                     [BinOp(Assoc.None, "==", BinaryOperator.Equal), BinOp(Assoc.None, "!=", BinaryOperator.NotEqual)], // 11
                     [BinOp(Assoc.Left, "&&", BinaryOperator.And)], // 12
@@ -164,7 +180,12 @@ partial class NixParser
 
         public static ExprP ExprSelect => field ??=
             choice((ExprP[]) [
-                // expr_simple '.' attrpath
+                attempt(
+                    from expr in ExprSimple
+                    from _10 in Tokens.Dot
+                    from attrpath in Attrpath
+                    select NixExpr.Selection(expr, attrpath)
+                ),
                 // expr_simple '.' attrpath OR_KW expr_select
                 // expr_simple OR_KW
                 ExprSimple,
@@ -209,12 +230,14 @@ partial class NixParser
             ]);
 
         public static Parser<NixAttrsPath> Attrpath => field ??=
-            choice((Parser<NixAttrsPath>[]) [
-                // attrpath '.' attr
-                // attrpath '.' string_attr
-                Attr,
-                // string_attr
-            ]);
+            from segments in sepBy1(
+                    debug(choice(
+                        Attr
+                        // string_attr
+                    ), "attrpath_segment"),
+                    debug(Tokens.Dot, "attrpath_dot")
+                )
+            select new NixAttrsPath(segments.Head.ValueUnsafe()!.Identifier);
 
         public static Parser<NixAttrsPath> Attr => field ??=
             choice(

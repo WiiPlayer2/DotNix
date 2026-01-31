@@ -76,4 +76,22 @@ public static class Operators
             },
             _ => null,
         };
+
+    public static NixValue2 Concat(NixValue2 a, NixValue2 b) => Helper.Thunk(async () =>
+    {
+        var aList = (NixList) await a.UnThunk;
+        var bList = (NixList) await b.UnThunk;
+        var items = aList.Items.Concat(bList.Items).ToList();
+        return new NixList(items);
+    });
+
+    public static NixValue2 Update(NixValue2 a, NixValue2 b) => Helper.Thunk(async () =>
+    {
+        var aAttrs = (NixAttrs) await a.UnThunk;
+        var bAttrs = (NixAttrs) await b.UnThunk;
+        var items = aAttrs.Items.ToDictionary();
+        foreach (var item in bAttrs.Items.ToDictionary())
+            items[item.Key] = item.Value;
+        return new NixAttrs(items);
+    });
 }

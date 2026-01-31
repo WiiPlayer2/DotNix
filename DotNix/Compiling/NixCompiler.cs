@@ -15,7 +15,8 @@ public class NixCompiler
         identifier: x => Compile(scope, x),
         function: x => Compile(scope, x),
         apply: x => Compile(scope, x),
-        with: x => Compile(scope, x)
+        with: x => Compile(scope, x),
+        selection: x => CompileSelection(scope, x)
     );
 
     private static NixValue2 Compile(NixExpr.Literal_ literalExpr) => literalExpr.Value;
@@ -39,6 +40,8 @@ public class NixCompiler
             BinaryOperator.LessThanOrEqual => Op(Operators.LessThanOrEqual),
             BinaryOperator.GreaterThan => Op(Operators.GreaterThan),
             BinaryOperator.GreaterThanOrEqual => Op(Operators.GreaterThanOrEqual),
+            BinaryOperator.Concat => Op(Operators.Concat),
+            BinaryOperator.Update => Op(Operators.Update),
         };
 
         NixThunk Op(Func<NixValue2, NixValue2, NixValue2> fn) => new(
@@ -76,7 +79,7 @@ public class NixCompiler
         NixScope letScope = default!;
         letScope = new NixScope(scope, let.Statements.Select(s => s.Match(
             // ReSharper disable once AccessToModifiedClosure
-            assign: assign => new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Thunk(() => Compile(letScope, assign.Expression))))
+            assign: assign => new KeyValuePair<string, NixValue2>(assign.Path.Identifier.Text, Helper.Thunk(() => Compile(letScope, assign.Expression))))
         ).ToDictionary());
         return Compile(letScope, let.Expression);
     }
@@ -123,5 +126,9 @@ public class NixCompiler
         }));
     }
 
-    private static NixThunk Thunk(Func<NixValue2> fn) => new(new(() => Task.FromResult(fn())));
+    private static NixValue2 CompileSelection(NixScope scope, NixExpr.Selection_ selection)
+    {
+        var attrs = Compile(scope, selection.Expr);
+        return Helper.Thunk(async () => ((NixAttrs) await attrs.UnThunk).Items[selection.AttrsPath.Identifier.Text]);
+    }
 }
