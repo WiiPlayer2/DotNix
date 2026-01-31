@@ -30,4 +30,6 @@ public abstract partial record NixExpr
     public record Selection_(NixExpr Expr, NixAttrsPath AttrsPath) : NixExpr;
     
     public record HasAttr_(NixExpr Expr, NixAttrsPath AttrsPath) : NixExpr;
+    
+    public record If_(NixExpr IfCond, NixExpr Then, NixExpr Else) : NixExpr;
 }

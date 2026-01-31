@@ -41,6 +41,9 @@ partial class NixParser
                 "in",
                 "or",
                 "with",
+                "if",
+                "then",
+                "else",
             ],
             
             IdentStart: either(letter, ch('_')),
@@ -88,6 +91,12 @@ partial class NixParser
         private static KwP OR_KW => field ??= keyword("or");
         
         private static KwP WITH => field ??= keyword("with");
+
+        private static KwP IF => field ??= keyword("if");
+
+        private static KwP THEN => field ??= keyword("then");
+        
+        private static KwP ELSE => field ??= keyword("else");
 
         private static Parser<NixInteger> INT_LIT => field ??=
             from n in Tokens.Integer
@@ -142,6 +151,13 @@ partial class NixParser
         public static ExprP ExprIf => field ??=
             choice((ExprP[]) [
                 // IF expr THEN expr ELSE expr
+                from _10 in IF
+                from exprIf in Expr
+                from _20 in THEN
+                from exprThen in Expr
+                from _30 in ELSE
+                from exprElse in Expr
+                select NixExpr.If(exprIf, exprThen, exprElse),
                 // expr_pipe_from
                 // expr_pipe_into
                 ExprOp,
