@@ -24,7 +24,7 @@ public class NixCompiler
 
     private static NixValueThunked CompileLiteral(NixExpr.Literal_ literalExpr) => NixValueThunked.Value(literalExpr.Value);
 
-    private static NixThunk CompileBinaryOp(NixScope scope, NixExpr.BinaryOp_ binaryOp)
+    private static NixValueThunked CompileBinaryOp(NixScope scope, NixExpr.BinaryOp_ binaryOp)
     {
         var aValue = Compile(scope, binaryOp.Left);
         var bValue = Compile(scope, binaryOp.Right);
@@ -47,12 +47,12 @@ public class NixCompiler
             BinaryOperator.Update => Op(Operators.Update),
         };
 
-        NixThunk Op(Func<NixValue, NixValue, NixValue> fn) => new(
-            new(async () => NixValueThunked.Value(fn(await aValue.UnThunk, await bValue.UnThunk))
-        ));
+        NixValueThunked Op(Func<NixValue, NixValue, NixValue> fn) => Helper.Thunk(
+            async () => NixValueThunked.Value(fn(await aValue.UnThunk, await bValue.UnThunk))
+        );
     }
 
-    private static NixThunk CompileUnaryOp(NixScope scope, NixExpr.UnaryOp_ unaryOp)
+    private static NixValueThunked CompileUnaryOp(NixScope scope, NixExpr.UnaryOp_ unaryOp)
     {
         var aValue = Compile(scope, unaryOp.Expr);
         return unaryOp.Operator.Operator switch
@@ -61,8 +61,8 @@ public class NixCompiler
             UnaryOperator.Not => Op(Operators.Not),
         };
 
-        NixThunk Op(Func<NixValue, NixValue> fn) => new(
-            new(async () => NixValueThunked.Value(fn(await aValue.Strict)))
+        NixValueThunked Op(Func<NixValue, NixValue> fn) => Helper.Thunk(
+            async () => NixValueThunked.Value(fn(await aValue.Strict))
         );
     }
 
@@ -105,16 +105,16 @@ public class NixCompiler
     {
         var func = Compile(scope, apply.Func);
         var arg = Compile(scope, apply.Arg);
-        return new NixThunk(new(async () =>
+        return Helper.Thunk(async () =>
         {
             var fn = (NixFunction) await func.Strict;
             return await fn.Fn(arg);
-        }));
+        });
     }
 
     private static NixValueThunked CompileWith(NixScope scope, NixExpr.With_ with)
     {
-        return new NixThunk(new(async () =>
+        return Helper.Thunk(async () =>
         {
             var bindValue = await Compile(scope, with.BindExpr).UnThunk;
             var items = bindValue switch
@@ -129,7 +129,7 @@ public class NixCompiler
                 items
             );
             return Compile(withScope, with.Expression);
-        }));
+        });
     }
 
     private static NixValueThunked CompileSelection(NixScope scope, NixExpr.Selection_ selection)

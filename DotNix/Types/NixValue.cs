@@ -4,14 +4,14 @@ using DotNix.Helpers;
 
 namespace DotNix.Types;
 
-public abstract record NixValue
+public abstract record NixValue(NixValueKind Kind)
 {
     public abstract AsyncLazy<NixValueStrict> Strict { get; }
 }
 
 public abstract record NixValueStrict : NixValue
 {
-    public NixValueStrict()
+    public NixValueStrict(NixValueKind kind) : base(kind)
     {
         Strict = new(() => Task.FromResult(this));
     }

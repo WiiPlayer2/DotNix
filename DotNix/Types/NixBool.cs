@@ -8,7 +8,7 @@ public record NixBool : NixValueStrict
     
     public static NixBool False => field ??= new(false);
     
-    private NixBool(bool value)
+    private NixBool(bool value) : base(NixValueKind.Bool)
     {
         Value = value;
     }

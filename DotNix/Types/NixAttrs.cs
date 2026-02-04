@@ -4,7 +4,7 @@ using DotNix.Helpers;
 
 namespace DotNix.Types;
 
-public record NixAttrs(IReadOnlyDictionary<string, NixValueThunked> Items) : NixValue
+public record NixAttrs(IReadOnlyDictionary<string, NixValueThunked> Items) : NixValue(NixValueKind.Attrs)
 {
     public override AsyncLazy<NixValueStrict> Strict { get; } =
         new(async () =>
@@ -18,7 +18,7 @@ public record NixAttrs(IReadOnlyDictionary<string, NixValueThunked> Items) : Nix
         );
 }
 
-public record NixAttrsStrict(IReadOnlyDictionary<string, NixValueStrict> Items) : NixValueStrict
+public record NixAttrsStrict(IReadOnlyDictionary<string, NixValueStrict> Items) : NixValueStrict(NixValueKind.Attrs)
 {
     public NixAttrs ToUnstrict() =>
         new(Items.ToDictionary(x => x.Key, x => NixValueThunked.Value(x.Value)));
