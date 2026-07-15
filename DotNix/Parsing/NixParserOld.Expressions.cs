@@ -7,7 +7,7 @@ using KwP = LanguageExt.Parsec.Parser<string>;
 
 namespace DotNix.Parsing;
 
-partial class NixParser
+partial class NixParserOld
 {
     // https://github.com/NixOS/nix/blob/master/src/libexpr/parser.y
     public static class Expressions

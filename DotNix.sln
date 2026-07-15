@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNix.Tests", "DotNix.Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{381EF91F-6851-47ED-9559-AC213D0FCA8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNix.Parsing", "DotNix.Parsing\DotNix.Parsing.csproj", "{AFEA697B-7C91-4047-8743-765A10B7EB82}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E58096E4-DE12-48AF-9C88-01623A3C9311}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,7 +24,12 @@ Global
 		{0D0343F3-4957-43FB-93D6-A55D85068031}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D0343F3-4957-43FB-93D6-A55D85068031}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D0343F3-4957-43FB-93D6-A55D85068031}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFEA697B-7C91-4047-8743-765A10B7EB82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFEA697B-7C91-4047-8743-765A10B7EB82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFEA697B-7C91-4047-8743-765A10B7EB82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFEA697B-7C91-4047-8743-765A10B7EB82}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{0D0343F3-4957-43FB-93D6-A55D85068031} = {E58096E4-DE12-48AF-9C88-01623A3C9311}
 	EndGlobalSection
 EndGlobal

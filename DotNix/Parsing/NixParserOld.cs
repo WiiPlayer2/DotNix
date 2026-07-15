@@ -5,7 +5,7 @@ using Char = LanguageExt.Parsec.Char;
 
 namespace DotNix.Parsing;
 
-public static partial class NixParser
+public static partial class NixParserOld
 {
     public static NixExpr Parse(string code)
     {
