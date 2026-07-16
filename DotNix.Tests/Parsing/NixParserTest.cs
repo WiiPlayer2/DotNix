@@ -54,5 +54,11 @@ public class NixParserTest
                         """,
             Float(1337.42)
         ),
+        (
+            /*lang=nix*/"""
+                        "hi"
+                        """,
+            String("hi")
+        ),
     ];
 }

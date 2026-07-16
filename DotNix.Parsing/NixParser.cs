@@ -47,10 +47,47 @@ public static class NixParser
             select firstDigit + beforeDecimalPoint + dot + afterDecimalPoint
         ).Map(x => NixExpression.Float(double.Parse(x)));
 
+    private static Parser<NixExpression> StringExpression => field ??=
+        from _ in unitp
+        let quote = ch('"')
+        let fragment = choice(
+            StringFragment,
+            Interpolation
+            // TODO: escaped interpolation
+            // choice(
+            //     EscapeSequence,
+            //     chain(DollarEscape, StringFragment.label("$"))))
+        )
+        from start in quote
+        from fragments in many(fragment)
+        from end in quote
+        select NixExpression.String([..fragments]);
+    
+    // [^"$\\]|\$(?!\{)|\\.
+    private static Parser<NixStringFragment> StringFragment
+    {
+        get
+        {
+            var stringChar = StringChar();
+            return field ??= asString(many1(stringChar)).Map(NixStringFragment.Text);
+
+            static Parser<char> StringChar() => choice(
+                noneOf("\"$\\").Map(x => x),
+                from _dollar in ch('$')
+                from _10 in notFollowedBy(ch('{'))
+                select _dollar,
+                ch('\\')
+            );
+        }
+    }
+
+    private static Parser<NixStringFragment> Interpolation => field ??= failure<NixStringFragment>("TODO");
+
     private static Parser<NixExpression> ExprSimple => field ??= choice(
         VariableExpression,
         attempt(FloatExpression),
-        IntegerExpression
+        IntegerExpression,
+        StringExpression
         // ...
     );
 
