@@ -34,10 +34,22 @@ public static class NixParser
     private static Parser<NixExpression> VariableExpression => field ??= Identifier.Map(NixExpression.Variable);
 
     private static Parser<NixExpression> IntegerExpression => field ??=
-        asString(many1(oneOf("0123456789"))).Map(x => NixExpression.Integer(long.Parse(x)));
+        asString(many1(digit)).Map(x => NixExpression.Integer(long.Parse(x)));
+    
+    // TODO: Implement 0.xxx and E formats
+    // /(([1-9][0-9]*\.[0-9]*)|(0?\.[0-9]+))([Ee][+-]?[0-9]+)?/
+    private static Parser<NixExpression> FloatExpression => field ??=
+        asString(
+            from firstDigit in oneOf("123456789")
+            from beforeDecimalPoint in many(digit)
+            from dot in ch('.')
+            from afterDecimalPoint in many(digit)
+            select firstDigit + beforeDecimalPoint + dot + afterDecimalPoint
+        ).Map(x => NixExpression.Float(double.Parse(x)));
 
     private static Parser<NixExpression> ExprSimple => field ??= choice(
         VariableExpression,
+        attempt(FloatExpression),
         IntegerExpression
         // ...
     );
