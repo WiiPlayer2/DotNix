@@ -6,4 +6,6 @@ namespace DotNix.Parsing.Models;
 public abstract partial record NixExpression
 {
     public record Variable_(string Name) : NixExpression;
+    
+    public record Integer_(long Value) : NixExpression;
 }

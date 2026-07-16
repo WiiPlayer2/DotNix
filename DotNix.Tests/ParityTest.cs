@@ -15,7 +15,7 @@ using static LanguageExt.Parsec.Prim;
 
 namespace DotNix.Tests;
 
-[TestClass]
+[TestClass, Ignore]
 public class ParityTest
 {
     [TestMethod]

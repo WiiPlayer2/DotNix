@@ -11,7 +11,7 @@ public static class NixParser
 {
     public static ParserResult<NixExpression> Parse(string code, CancellationToken cancellationToken)
     {
-        var result = Prim.parse(VariableExpression, code);
+        var result = parse(ExprSimple, code);
         return result.Match(
             ConsumedOK: (expression, s, arg3) => ParserResult.Ok(expression),
             ConsumedError: error => ParserResult.Error(new ParserError(error.Msg)),
@@ -32,6 +32,15 @@ public static class NixParser
     private static Parser<string> Identifier => field ??= Tokens.Identifier.label("identifier");
     
     private static Parser<NixExpression> VariableExpression => field ??= Identifier.Map(NixExpression.Variable);
+
+    private static Parser<NixExpression> IntegerExpression => field ??=
+        asString(many1(oneOf("0123456789"))).Map(x => NixExpression.Integer(long.Parse(x)));
+
+    private static Parser<NixExpression> ExprSimple => field ??= choice(
+        VariableExpression,
+        IntegerExpression
+        // ...
+    );
 
     #endregion
 }

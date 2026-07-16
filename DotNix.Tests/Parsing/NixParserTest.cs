@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using DotNix.Parsing;
 using DotNix.Parsing.Models;
 using static DotNix.Parsing.Models.NixExpression;
@@ -24,7 +25,11 @@ public class NixParserTest
         var result = NixParser.Parse(code, CancellationToken);
 
         // Assert
-        result.GetValueOrDefault().Should().Be(expectedExpression.GetValueOrDefault());
+        using (new AssertionScope())
+        {
+            result.GetValueOrDefault().Should().Be(expectedExpression.GetValueOrDefault());
+            result.GetErrorOrDefault().Should().Be(expectedExpression.GetErrorOrDefault());
+        }
     }
 
     public static IEnumerable<object[]> TestCases => TestCasesTyped.Select(x => new object[] { x.Item1, x.Item2 });
@@ -33,9 +38,15 @@ public class NixParserTest
     [
         (
             /*lang=nix*/"""
-            true
-            """,
+                        true
+                        """,
             Variable("true")
-        )
+        ),
+        (
+            /*lang=nix*/"""
+                        1337
+                        """,
+            Integer(1337)
+        ),
     ];
 }
