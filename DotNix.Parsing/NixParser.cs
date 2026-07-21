@@ -1,4 +1,6 @@
-﻿using DotNix.Parsing.Models;
+﻿using System.Text;
+using DotNix.Parsing.Models;
+using LanguageExt;
 using LanguageExt.Parsec;
 using static LanguageExt.Prelude;
 using static LanguageExt.Parsec.Prim;
@@ -14,9 +16,9 @@ public static class NixParser
         var result = parse(ExprSimple, code);
         return result.Match(
             ConsumedOK: (expression, s, arg3) => ParserResult.Ok(expression),
-            ConsumedError: error => ParserResult.Error(new ParserError(error.Msg)),
+            ConsumedError: error => ParserResult.Error(new ParserError(error.ToString())),
             EmptyOK: (expression, s, arg3) => ParserResult.Error(new ParserError("Empty input")),
-            EmptyError: error => ParserResult.Error(new ParserError(error.Msg)));
+            EmptyError: error => ParserResult.Error(new ParserError(error.ToString())));
     }
     
     // https://github.com/nix-community/tree-sitter-nix/blob/master/grammar.js
@@ -47,21 +49,59 @@ public static class NixParser
             select firstDigit + beforeDecimalPoint + dot + afterDecimalPoint
         ).Map(x => NixExpression.Float(double.Parse(x)));
 
+    private static Parser<NixStringFragment> EscapeSequence => field ??=
+        from backslash in ch('\\')
+        from character in noneOf('$')
+        select NixStringFragment.Text(character.ToString());
+
+    private static Parser<NixStringFragment> DollarEscape => field ??=
+        str("\\$").Map(x => NixStringFragment.Text("$"));
+
+    private static NixStringFragment CombineTextFragments(Seq<NixStringFragment> fragments) =>
+        NixStringFragment.Text(
+            fragments.Select(x => (NixStringFragment.Text_)x).Aggregate(string.Empty, (acc, cur) => acc + cur.Value));
+
+    private static IEnumerable<NixStringFragment> CombineTextFragments2(IEnumerable<NixStringFragment> fragments)
+    {
+        StringBuilder? stringBuilder = null;
+        foreach (var fragment in fragments)
+        {
+            if (fragment is NixStringFragment.Text_ text)
+            {
+                stringBuilder ??= new();
+                stringBuilder.Append(text.Value);
+            }
+            else
+            {
+                if (stringBuilder is not null)
+                {
+                    yield return NixStringFragment.Text(stringBuilder.ToString());
+                    stringBuilder = null;
+                }
+
+                yield return fragment;
+            }
+        }
+
+        if (stringBuilder is null) yield break;
+        
+        yield return NixStringFragment.Text(stringBuilder.ToString());
+    }
+    
     private static Parser<NixExpression> StringExpression => field ??=
         from _ in unitp
         let quote = ch('"')
         let fragment = choice(
             StringFragment,
-            Interpolation
-            // TODO: escaped interpolation
-            // choice(
-            //     EscapeSequence,
-            //     chain(DollarEscape, StringFragment.label("$"))))
+            Interpolation,
+            choice(
+                attempt(EscapeSequence),
+                chain(DollarEscape, StringFragment.label("$")).Map(CombineTextFragments))
         )
         from start in quote
         from fragments in many(fragment)
         from end in quote
-        select NixExpression.String([..fragments]);
+        select NixExpression.String([..CombineTextFragments2(fragments)]);
     
     // [^"$\\]|\$(?!\{)|\\.
     private static Parser<NixStringFragment> StringFragment
@@ -72,13 +112,12 @@ public static class NixParser
             return field ??= asString(many1(stringChar)).Map(NixStringFragment.Text);
 
             static Parser<char> StringChar() => choice(
-                noneOf("\"$\\").Map(x => x),
+                attempt(noneOf("\"$\\").Map(x => x)),
                 attempt(
                     from _dollar in ch('$')
                     from _10 in notFollowedBy(ch('{'))
                     select _dollar
-                ),
-                ch('\\')
+                )
             );
         }
     }

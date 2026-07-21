@@ -70,5 +70,11 @@ public class NixParserTest
                 Interpolation(String("42")),
             ])
         ),
+        (
+            /*lang=nix*/"""
+                        "answer: \${\"42\"}"
+                        """,
+            String("answer: ${\"42\"}")
+        ),
     ];
 }
