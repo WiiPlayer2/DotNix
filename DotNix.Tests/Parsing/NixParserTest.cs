@@ -3,6 +3,7 @@ using AwesomeAssertions.Execution;
 using DotNix.Parsing;
 using DotNix.Parsing.Models;
 using static DotNix.Parsing.Models.NixExpression;
+using static DotNix.Parsing.Models.NixStringFragment;
 
 namespace DotNix.Tests.Parsing;
 
@@ -59,6 +60,15 @@ public class NixParserTest
                         "hi"
                         """,
             String("hi")
+        ),
+        (
+            /*lang=nix*/"""
+                        "answer: ${"42"}"
+                        """,
+            String([
+                Text("answer: "),
+                Interpolation(String("42")),
+            ])
         ),
     ];
 }

@@ -73,15 +73,21 @@ public static class NixParser
 
             static Parser<char> StringChar() => choice(
                 noneOf("\"$\\").Map(x => x),
-                from _dollar in ch('$')
-                from _10 in notFollowedBy(ch('{'))
-                select _dollar,
+                attempt(
+                    from _dollar in ch('$')
+                    from _10 in notFollowedBy(ch('{'))
+                    select _dollar
+                ),
                 ch('\\')
             );
         }
     }
 
-    private static Parser<NixStringFragment> Interpolation => field ??= failure<NixStringFragment>("TODO");
+    private static Parser<NixStringFragment> Interpolation => field ??=
+        from start in str("${")
+        from expression in Expression.label("expression")
+        from end in ch('}')
+        select NixStringFragment.Interpolation(expression);
 
     private static Parser<NixExpression> ExprSimple => field ??= choice(
         VariableExpression,
@@ -90,6 +96,40 @@ public static class NixParser
         StringExpression
         // ...
     );
+
+    private static Parser<NixExpression> ExprSelectExpression => field ??= choice(
+        // SelectExpression,
+        ExprSimple
+    );
+
+    private static Parser<NixExpression> ExprApplyExpression => field ??= choice(
+        // ApplyExpression,
+        ExprSelectExpression
+    );
+
+    private static Parser<NixExpression> ExprOp => field ??= choice(
+        // HasAttrExpression,
+        // UnaryExpression,
+        // BinaryExpression,
+        ExprApplyExpression
+    );
+    
+    private static Parser<NixExpression> ExprIf => field ??= choice(
+        // IfExpression,
+        ExprOp
+    );
+
+    private static Parser<NixExpression> ExprFunctionExpression => field ??= choice(
+        // FunctionExpression,
+        // AssertExpression,
+        // WithExpression,
+        // LetExpression,
+        ExprIf
+    );
+
+    private static Parser<NixExpression> Expression => field ??= ExprFunctionExpression;
+
+    // private static Parser<T> choice<T>(params Parser<T>[] parsers) => Prim.choice<T>(toSeq(parsers.Select(attempt)));
 
     #endregion
 }
