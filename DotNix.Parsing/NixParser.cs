@@ -103,6 +103,21 @@ public static class NixParser
         from end in quote
         select NixExpression.String([..CombineTextFragments2(fragments)]);
     
+    private static Parser<NixExpression> IndentedStringExpression => field ??=
+        from _ in unitp
+        let quote = str("''")
+        let fragment = choice(
+            StringFragment,
+            Interpolation,
+            choice(
+                attempt(EscapeSequence),
+                chain(DollarEscape, StringFragment.label("$")).Map(CombineTextFragments))
+        )
+        from start in quote
+        from fragments in many(fragment)
+        from end in quote
+        select NixExpression.String([..CombineTextFragments2(fragments)]);
+    
     // [^"$\\]|\$(?!\{)|\\.
     private static Parser<NixStringFragment> StringFragment
     {
@@ -132,7 +147,8 @@ public static class NixParser
         VariableExpression,
         attempt(FloatExpression),
         IntegerExpression,
-        StringExpression
+        StringExpression,
+        IndentedStringExpression
         // ...
     );
 

@@ -76,5 +76,36 @@ public class NixParserTest
                         """,
             String("answer: ${\"42\"}")
         ),
+        (
+            /*lang=nix*/"""
+                        ''
+                        hi
+                        ''
+                        """,
+            String("hi")
+        ),
+        (
+            /*lang=nix*/"""
+                        ''
+                        answer: ${''
+                        42
+                        ''}
+                        ''
+                        """,
+            String([
+                Text("answer: "),
+                Interpolation(String("42")),
+            ])
+        ),
+        (
+            /*lang=nix*/"""
+                        ''
+                        answer: ''${'''
+                        42
+                        '''}
+                        ''
+                        """,
+            String("answer: ${''42''}")
+        ),
     ];
 }

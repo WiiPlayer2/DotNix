@@ -14,4 +14,11 @@
       <PackageReference Include="LanguageExt.Parsec" Version="5.0.0-beta-77" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="grammar.json" />
+      <EmbeddedResource Include="grammar.json" />
+      <None Remove="node-types.json" />
+      <EmbeddedResource Include="node-types.json" />
+    </ItemGroup>
+
 </Project>

@@ -28,6 +28,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DotNix.Parsing\DotNix.Parsing.csproj" />
+      <ProjectReference Include="..\DotNix.Utils\DotNix.Utils.csproj" />
       <ProjectReference Include="..\DotNix\DotNix.csproj" />
     </ItemGroup>
 
