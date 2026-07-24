@@ -64,24 +64,24 @@ public class TreeSitterParserTest
             Token("variable_expression", "true")
                 .AddField("name", Token("identifier", "true"))
         ),
-        // (
-        //     /*lang=nix*/"""
-        //                 1337
-        //                 """,
-        //     Blank
-        // ),
-        // (
-        //     /*lang=nix*/"""
-        //                 1337.42
-        //                 """,
-        //     Blank
-        // ),
-        // (
-        //     /*lang=nix*/"""
-        //                 "hi"
-        //                 """,
-        //     Blank
-        // ),
+        (
+            /*lang=nix*/"""
+                        1337
+                        """,
+            Token("integer_expression", "1337")
+        ),
+        (
+            /*lang=nix*/"""
+                        1337.42
+                        """,
+            Token("float_expression", "1337.42")
+        ),
+        (
+            /*lang=nix*/"""
+                        "hi"
+                        """,
+            Token("string_expression", "hi")
+        ),
         // (
         //     /*lang=nix*/"""
         //                 "answer: ${"42"}"

@@ -41,6 +41,8 @@ public class TreeSitterParser
         var parsers = new Dictionary<string, Parser<TreeSitterNode>>()
         {
             ["_path_start"] = failure<TreeSitterNode>("TODO _path_start"),
+            ["dollar_escape"] = DollarEscape(),
+            ["string_fragment"] = StringFragment(),
         };
         foreach (var (name, rule) in rules)
         {
@@ -90,5 +92,22 @@ public class TreeSitterParser
         };
 
         Parser<string> Input() => (input => ParserResult.EmptyOK(input.Value, input));
+
+        static Parser<TreeSitterNode> DollarEscape() => str("\\$").Map(x => TreeSitterNode.Token("\\$"));
+        
+        static Parser<TreeSitterNode> StringFragment()
+        {
+            var stringChar = StringChar();
+            return asString(many1(stringChar)).Map(TreeSitterNode.Token);
+
+            static Parser<char> StringChar() => choice(
+                attempt(noneOf("\"$\\").Map(x => x)),
+                attempt(
+                    from _dollar in ch('$')
+                    from _10 in notFollowedBy(ch('{'))
+                    select _dollar
+                )
+            );
+        }
     }
 }
