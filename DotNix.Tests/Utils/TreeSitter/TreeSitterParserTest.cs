@@ -1,12 +1,28 @@
 using AwesomeAssertions;
 using AwesomeAssertions.Execution;
+using AwesomeAssertions.Extensibility;
 using DotNix.Parsing;
 using DotNix.Parsing.Models;
+using DotNix.Tests.Utils.TreeSitter;
 using DotNix.Utils.TreeSitter;
+using LanguageExt;
 using LanguageExt.Parsec;
 using static DotNix.Utils.TreeSitter.TreeSitterNode;
 
+[assembly: AssertionEngineInitializer(typeof(Initializer), nameof(Initializer.Initialize))]
+
 namespace DotNix.Tests.Utils.TreeSitter;
+
+public static class Initializer
+{
+    public static void Initialize()
+    {
+        AssertionConfiguration.Current.Equivalency.Modify(options => options
+            .Using<Map<string, Lst<TreeSitterNode>>>(x => x.Subject.Pairs.ToDictionary().Should().BeEquivalentTo(x.Expectation.Pairs.ToDictionary())).WhenTypeIs<Map<string, Lst<TreeSitterNode>>>()
+        );
+    }
+}
+
 
 [TestClass]
 public class TreeSitterParserTest
@@ -32,7 +48,9 @@ public class TreeSitterParserTest
         // Assert
         if(result.IsFaulted)
             Assert.Fail(result.Reply.Error!.ToString());
-        result.Should().Be(expectedExpression);
+        result.Reply.Result.Should()
+            .BeEquivalentTo(expectedExpression, options => options
+                .Excluding(x => x.Types));
     }
 
     public static IEnumerable<object[]> TestCases => TestCasesTyped.Select(x => new object[] { x.Item1, x.Item2 });
@@ -43,7 +61,8 @@ public class TreeSitterParserTest
             /*lang=nix*/"""
                         true
                         """,
-            Blank
+            Token("variable_expression", "true")
+                .AddField("name", Token("identifier", "true"))
         ),
         // (
         //     /*lang=nix*/"""

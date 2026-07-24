@@ -44,7 +44,7 @@ public class TreeSitterParser
         };
         foreach (var (name, rule) in rules)
         {
-            parsers[name] = BuildRule(rule);
+            parsers[name] = BuildRule(rule).Map(x => x.AddType(name));
         }
 
         return parsers;
@@ -62,16 +62,16 @@ public class TreeSitterParser
         
         Parser<TreeSitterNode> BuildRule2(TreeSitterGrammarRuleDto rule) => rule switch
         {
-            TreeSitterGrammarRuleDto.Token token => BuildRule(token.Content),
+            TreeSitterGrammarRuleDto.Token token => BuildRule(token.Content).Map(x => TreeSitterNode.Token(x.Content)),
             TreeSitterGrammarRuleDto.Repeat1 repeat1 => many1(BuildRule(repeat1.Content)).Map(x => default(TreeSitterNode)),
-            TreeSitterGrammarRuleDto.ImmediateToken immediateToken => BuildRule(immediateToken.Content),
+            TreeSitterGrammarRuleDto.ImmediateToken immediateToken => BuildRule(immediateToken.Content).Map(x => TreeSitterNode.Token(x.Content)),
             TreeSitterGrammarRuleDto.PrecRight precRight => BuildRule(precRight.Content),
             TreeSitterGrammarRuleDto.PrecLeft precLeft => BuildRule(precLeft.Content),
             TreeSitterGrammarRuleDto.Alias alias => BuildRule(alias.Content).label(alias.Value),
             TreeSitterGrammarRuleDto.Prec prec => BuildRule(prec.Content),
-            TreeSitterGrammarRuleDto.Blank blank => unitp.Map(x => default(TreeSitterNode)),
+            TreeSitterGrammarRuleDto.Blank blank => unitp.Map(x => TreeSitterNode.Blank),
             TreeSitterGrammarRuleDto.Repeat repeat => many(BuildRule(repeat.Content)).Map(x => default(TreeSitterNode)),
-            TreeSitterGrammarRuleDto.String @string => str(@string.Value).Map(x => default(TreeSitterNode)),
+            TreeSitterGrammarRuleDto.String @string => str(@string.Value).Map(TreeSitterNode.Token),
             TreeSitterGrammarRuleDto.Pattern pattern =>
                 from input in Input()
                 from pos in getIndex
@@ -81,14 +81,14 @@ public class TreeSitterParser
                 from value in isMatch ? asString(count(match.Length, anyChar)) : failure<string>($"Pattern /{pattern.Value}/ doesn't match")
                 from newPos in getIndex
                 let _dbg = new{match,isMatch,value,pos,newPos}
-                select default(TreeSitterNode),
-            TreeSitterGrammarRuleDto.Field field => BuildRule(field.Content),
+                select TreeSitterNode.Token(value),
+            TreeSitterGrammarRuleDto.Field field => BuildRule(field.Content).Map(x => TreeSitterNode.Field(field.Name, x)),
             TreeSitterGrammarRuleDto.Seq seq => chain(seq.Members.Select(BuildRule).ToArray()).Map(x => default(TreeSitterNode)),
             TreeSitterGrammarRuleDto.Choice choice => Prim.choice(choice.Members.Select(x => attempt(BuildRule(x))).Reverse().ToArray()),
             TreeSitterGrammarRuleDto.Symbol symbol => lazyp(() => parsers[symbol.Name]),
             _ => throw new NotSupportedException($"{rule.GetType().Name} is not supported"),
         };
 
-        Parser<string> Input() => (input => ParserResult.EmptyOK<string>(input.Value, input));
+        Parser<string> Input() => (input => ParserResult.EmptyOK(input.Value, input));
     }
 }
