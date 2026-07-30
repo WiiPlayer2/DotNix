@@ -11,7 +11,8 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="LanguageExt.Parsec" Version="5.0.0-beta-77" />
+      <PackageReference Include="LanguageExt.Core" Version="5.0.0-beta-77" />
+      <PackageReference Include="TreeSitter.DotNet" Version="1.3.0" />
     </ItemGroup>
 
     <ItemGroup>

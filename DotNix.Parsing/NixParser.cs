@@ -1,67 +1,75 @@
 ﻿using System.Text;
 using DotNix.Parsing.Models;
 using LanguageExt;
-using LanguageExt.Parsec;
+using TreeSitter;
 using static LanguageExt.Prelude;
-using static LanguageExt.Parsec.Prim;
-using static LanguageExt.Parsec.Char;
-using static LanguageExt.Parsec.Expr;
 
 namespace DotNix.Parsing;
 
 public static class NixParser
 {
-    public static ParserResult<NixExpression> Parse(string code, CancellationToken cancellationToken)
+    private static readonly Parser parser;
+
+    static NixParser()
     {
-        var result = parse(ExprSimple, code);
-        return result.Match(
-            ConsumedOK: (expression, s, arg3) => ParserResult.Ok(expression),
-            ConsumedError: error => ParserResult.Error(new ParserError(error.ToString())),
-            EmptyOK: (expression, s, arg3) => ParserResult.Error(new ParserError("Empty input")),
-            EmptyError: error => ParserResult.Error(new ParserError(error.ToString())));
+        var language = new Language("/nix/store/9q1gf3k335d8q445nwy1w8ma25aqpsll-tree-sitter-nix-0.3.0-unstable-2025-12-03/parser", "tree_sitter_nix");
+        parser = new Parser(language);
     }
     
-    // https://github.com/nix-community/tree-sitter-nix/blob/master/grammar.js
-    #region Parser
+    public static ParserResult<NixExpression> Parse(string code, CancellationToken cancellationToken)
+    {
+        using var tree = parser.Parse(code);
+        if (tree is null)
+            return ParserResult.Error(new ParserError("no tree"));
+        return MapNode(tree.RootNode);
+    }
+    
+    #region Mappers
 
-    private static GenLanguageDef Language => field ??= GenLanguageDef.Empty.With(
-        IdentStart: either(letter, ch('_')),
-        IdentLetter: either(alphaNum, oneOf("_'-"))
+    private static NixExpression MapNode(Node node) => node.Type switch
+    {
+        "source_code" => MapNode(node.GetField("expression")),
+        "variable_expression" => NixExpression.Variable(node.GetField("name").Text),
+        "integer_expression" => NixExpression.Integer(long.Parse(node.Text)),
+        "float_expression" => NixExpression.Float(double.Parse(node.Text)),
+        "string_expression" => MapStringExpression(node),
+        "indented_string_expression" => MapIndentedStringExpression(node),
+        _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
+    };
+
+    private static NixExpression MapStringExpression(Node node) => NixExpression.String(
+        toList(CleanupFragments(
+            node.Fields
+                .Skip(1)
+                .Take(node.Fields.Count - 2)
+                .Select(kv => MapStringFragment(kv.Value))
+        ))
+    );
+
+    private static NixExpression MapIndentedStringExpression(Node node) => NixExpression.String(
+        toList(CleanupFragments(
+            node.Fields
+                .Skip(1)
+                .Take(node.Fields.Count - 2)
+                .Select(kv => MapIndentedStringFragment(kv.Value)
+            )
+        ))
     );
     
-    private static GenTokenParser Tokens => field ??= Token.makeTokenParser(Language);
+    private static NixStringFragment MapStringFragment(Node node) => node.Type switch
+    {
+        "string_fragment" => NixStringFragment.Text(node.Text),
+        "interpolation" => NixStringFragment.Interpolation(MapNode(node.GetField("expression"))),
+        "dollar_escape" => NixStringFragment.Text(string.Empty),
+        "escape_sequence" => NixStringFragment.Text(node.Text switch
+        {
+            "\\\"" => "\"",
+            _ => throw new NotImplementedException($"Escape sequence {node.Text} not implemented"),
+        }),
+        _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
+    };
 
-    private static Parser<string> Identifier => field ??= Tokens.Identifier.label("identifier");
-    
-    private static Parser<NixExpression> VariableExpression => field ??= Identifier.Map(NixExpression.Variable);
-
-    private static Parser<NixExpression> IntegerExpression => field ??=
-        asString(many1(digit)).Map(x => NixExpression.Integer(long.Parse(x)));
-    
-    // TODO: Implement 0.xxx and E formats
-    // /(([1-9][0-9]*\.[0-9]*)|(0?\.[0-9]+))([Ee][+-]?[0-9]+)?/
-    private static Parser<NixExpression> FloatExpression => field ??=
-        asString(
-            from firstDigit in oneOf("123456789")
-            from beforeDecimalPoint in many(digit)
-            from dot in ch('.')
-            from afterDecimalPoint in many(digit)
-            select firstDigit + beforeDecimalPoint + dot + afterDecimalPoint
-        ).Map(x => NixExpression.Float(double.Parse(x)));
-
-    private static Parser<NixStringFragment> EscapeSequence => field ??=
-        from backslash in ch('\\')
-        from character in noneOf('$')
-        select NixStringFragment.Text(character.ToString());
-
-    private static Parser<NixStringFragment> DollarEscape => field ??=
-        str("\\$").Map(x => NixStringFragment.Text("$"));
-
-    private static NixStringFragment CombineTextFragments(Seq<NixStringFragment> fragments) =>
-        NixStringFragment.Text(
-            fragments.Select(x => (NixStringFragment.Text_)x).Aggregate(string.Empty, (acc, cur) => acc + cur.Value));
-
-    private static IEnumerable<NixStringFragment> CombineTextFragments2(IEnumerable<NixStringFragment> fragments)
+    private static IEnumerable<NixStringFragment> CleanupFragments(IEnumerable<NixStringFragment> fragments)
     {
         StringBuilder? stringBuilder = null;
         foreach (var fragment in fragments)
@@ -88,103 +96,18 @@ public static class NixParser
         yield return NixStringFragment.Text(stringBuilder.ToString());
     }
     
-    private static Parser<NixExpression> StringExpression => field ??=
-        from _ in unitp
-        let quote = ch('"')
-        let fragment = choice(
-            StringFragment,
-            Interpolation,
-            choice(
-                attempt(EscapeSequence),
-                chain(DollarEscape, StringFragment.label("$")).Map(CombineTextFragments))
-        )
-        from start in quote
-        from fragments in many(fragment)
-        from end in quote
-        select NixExpression.String([..CombineTextFragments2(fragments)]);
-    
-    private static Parser<NixExpression> IndentedStringExpression => field ??=
-        from _ in unitp
-        let quote = str("''")
-        let fragment = choice(
-            StringFragment,
-            Interpolation,
-            choice(
-                attempt(EscapeSequence),
-                chain(DollarEscape, StringFragment.label("$")).Map(CombineTextFragments))
-        )
-        from start in quote
-        from fragments in many(fragment)
-        from end in quote
-        select NixExpression.String([..CombineTextFragments2(fragments)]);
-    
-    // [^"$\\]|\$(?!\{)|\\.
-    private static Parser<NixStringFragment> StringFragment
+    private static NixStringFragment MapIndentedStringFragment(Node node) => node.Type switch
     {
-        get
+        "string_fragment" => NixStringFragment.Text(node.Text),
+        "interpolation" => NixStringFragment.Interpolation(MapNode(node.GetField("expression"))),
+        "dollar_escape" => NixStringFragment.Text(string.Empty),
+        "escape_sequence" => NixStringFragment.Text(node.Text switch
         {
-            var stringChar = StringChar();
-            return field ??= asString(many1(stringChar)).Map(NixStringFragment.Text);
-
-            static Parser<char> StringChar() => choice(
-                attempt(noneOf("\"$\\").Map(x => x)),
-                attempt(
-                    from _dollar in ch('$')
-                    from _10 in notFollowedBy(ch('{'))
-                    select _dollar
-                )
-            );
-        }
-    }
-
-    private static Parser<NixStringFragment> Interpolation => field ??=
-        from start in str("${")
-        from expression in Expression.label("expression")
-        from end in ch('}')
-        select NixStringFragment.Interpolation(expression);
-
-    private static Parser<NixExpression> ExprSimple => field ??= choice(
-        VariableExpression,
-        attempt(FloatExpression),
-        IntegerExpression,
-        StringExpression,
-        IndentedStringExpression
-        // ...
-    );
-
-    private static Parser<NixExpression> ExprSelectExpression => field ??= choice(
-        // SelectExpression,
-        ExprSimple
-    );
-
-    private static Parser<NixExpression> ExprApplyExpression => field ??= choice(
-        // ApplyExpression,
-        ExprSelectExpression
-    );
-
-    private static Parser<NixExpression> ExprOp => field ??= choice(
-        // HasAttrExpression,
-        // UnaryExpression,
-        // BinaryExpression,
-        ExprApplyExpression
-    );
-    
-    private static Parser<NixExpression> ExprIf => field ??= choice(
-        // IfExpression,
-        ExprOp
-    );
-
-    private static Parser<NixExpression> ExprFunctionExpression => field ??= choice(
-        // FunctionExpression,
-        // AssertExpression,
-        // WithExpression,
-        // LetExpression,
-        ExprIf
-    );
-
-    private static Parser<NixExpression> Expression => field ??= ExprFunctionExpression;
-
-    // private static Parser<T> choice<T>(params Parser<T>[] parsers) => Prim.choice<T>(toSeq(parsers.Select(attempt)));
+            "'''" => "''",
+            _ => throw new NotImplementedException($"Escape sequence {node.Text} not implemented"),
+        }),
+        _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
+    };
 
     #endregion
 }

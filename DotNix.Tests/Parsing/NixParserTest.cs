@@ -82,7 +82,7 @@ public class NixParserTest
                         hi
                         ''
                         """,
-            String("hi")
+            String("hi\n")
         ),
         (
             /*lang=nix*/"""
@@ -94,7 +94,8 @@ public class NixParserTest
                         """,
             String([
                 Text("answer: "),
-                Interpolation(String("42")),
+                Interpolation(String("42\n")),
+                Text("\n"),
             ])
         ),
         (
@@ -105,7 +106,7 @@ public class NixParserTest
                         '''}
                         ''
                         """,
-            String("answer: ${''42''}")
+            String("answer: ${''\n42\n''}\n")
         ),
     ];
 }
