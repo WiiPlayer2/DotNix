@@ -108,5 +108,26 @@ public class NixParserTest
                         """,
             String("answer: ${''\n42\n''}\n")
         ),
+        (
+            /*lang=nix*/"""
+                        ./test
+                        """,
+            Path("./test")
+        ),
+        (
+            /*lang=nix*/"""
+                        /test
+                        """,
+            Path("/test")
+        ),
+        (
+            /*lang=nix*/"""
+                        ./${"test"}
+                        """,
+            Path([
+                Text("./"),
+                Interpolation(String("test")),
+            ])
+        ),
     ];
 }

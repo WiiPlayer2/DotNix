@@ -34,6 +34,7 @@ public static class NixParser
         "float_expression" => NixExpression.Float(double.Parse(node.Text)),
         "string_expression" => MapStringExpression(node),
         "indented_string_expression" => MapIndentedStringExpression(node),
+        "path_expression" => MapPathExpression(node),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
 
@@ -43,6 +44,13 @@ public static class NixParser
                 .Skip(1)
                 .Take(node.Fields.Count - 2)
                 .Select(kv => MapStringFragment(kv.Value))
+        ))
+    );
+
+    private static NixExpression MapPathExpression(Node node) => NixExpression.Path(
+        toList(CleanupFragments(
+            node.Fields
+                .Select(kv => MapPathFragment(kv.Value))
         ))
     );
 
@@ -69,6 +77,13 @@ public static class NixParser
             "\\\"" => "\"",
             _ => throw new NotImplementedException($"Escape sequence {node.Text} not implemented"),
         }),
+        _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
+    };
+
+    private static NixStringFragment MapPathFragment(Node node) => node.Type switch
+    {
+        "path_fragment" => NixStringFragment.Text(node.Text),
+        "interpolation" => NixStringFragment.Interpolation(MapNode(node.GetField("expression"))),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
 
