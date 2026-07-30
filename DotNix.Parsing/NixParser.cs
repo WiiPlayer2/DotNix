@@ -46,16 +46,19 @@ public static class NixParser
         ))
     );
 
-    private static NixExpression MapIndentedStringExpression(Node node) => NixExpression.String(
-        toList(CleanupFragments(
-            node.Fields
-                .Skip(1)
-                .Take(node.Fields.Count - 2)
-                .Select(kv => MapIndentedStringFragment(kv.Value)
-            )
-        ))
-    );
-    
+    private static NixExpression MapIndentedStringExpression(Node node)
+    {
+        var rawFragments = node.Fields
+            .Skip(1)
+            .Take(node.Fields.Count - 2)
+            .Select(kv => MapIndentedStringFragment(kv.Value));
+        var cleanedUpFragments = toList(CleanupFragments(rawFragments));
+        // TODO: use correct indent
+        var fragments = cleanedUpFragments
+            .SetItem(0, cleanedUpFragments[0] is NixStringFragment.Text_ text ? NixStringFragment.Text(text.Value.TrimStart('\n')) : cleanedUpFragments[0]);
+        return NixExpression.String(toList(fragments));
+    }
+
     private static NixStringFragment MapStringFragment(Node node) => node.Type switch
     {
         "string_fragment" => NixStringFragment.Text(node.Text),
