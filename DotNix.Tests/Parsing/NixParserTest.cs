@@ -129,5 +129,11 @@ public class NixParserTest
                 Interpolation(String("test")),
             ])
         ),
+        (
+            /*lang=nix*/"""
+                        (1312)
+                        """,
+            Integer(1312)
+        ),
     ];
 }

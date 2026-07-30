@@ -35,6 +35,7 @@ public static class NixParser
         "string_expression" => MapStringExpression(node),
         "indented_string_expression" => MapIndentedStringExpression(node),
         "path_expression" => MapPathExpression(node),
+        "parenthesized_expression" => MapNode(node.GetField("expression")),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
 
