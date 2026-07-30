@@ -42,7 +42,7 @@ public static class NixParser
 
     private static NixExpression MapAttrs(Node node) => NixExpression.Attrs(MapBindingSet(node.FirstNamedChild!));
 
-    private static Lst<NixBinding> MapBindingSet(Node node) => List(MapBinding(node.GetField("binding")));
+    private static Lst<NixBinding> MapBindingSet(Node node) => toList(node.GetFields("binding").Select(MapBinding));
     
     private static NixBinding MapBinding(Node node) => new(MapAttrPath(node.GetField("attrpath")), MapNode(node.GetField("expression")));
 
