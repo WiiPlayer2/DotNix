@@ -135,5 +135,16 @@ public class NixParserTest
                         """,
             Integer(1312)
         ),
+        (
+            /*lang=nix*/"""
+                        { x = 420; }
+                        """,
+            Attrs([
+                new NixBinding(
+                    new NixAttrPath([NixAttrPathSegment.Identifier("x")]),
+                    Integer(420)
+                ),
+            ])
+        ),
     ];
 }

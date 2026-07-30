@@ -36,9 +36,18 @@ public static class NixParser
         "indented_string_expression" => MapIndentedStringExpression(node),
         "path_expression" => MapPathExpression(node),
         "parenthesized_expression" => MapNode(node.GetField("expression")),
+        "attrset_expression" => MapAttrs(node),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
 
+    private static NixExpression MapAttrs(Node node) => NixExpression.Attrs(MapBindingSet(node.FirstNamedChild!));
+
+    private static Lst<NixBinding> MapBindingSet(Node node) => List(MapBinding(node.GetField("binding")));
+    
+    private static NixBinding MapBinding(Node node) => new(MapAttrPath(node.GetField("attrpath")), MapNode(node.GetField("expression")));
+
+    private static NixAttrPath MapAttrPath(Node node) => new(NixAttrPathSegment.Identifier(node.Text));
+    
     private static NixExpression MapStringExpression(Node node) => NixExpression.String(
         toList(CleanupFragments(
             node.Fields
