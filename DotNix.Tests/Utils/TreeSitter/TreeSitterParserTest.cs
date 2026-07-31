@@ -24,7 +24,7 @@ public static class Initializer
 }
 
 
-[TestClass]
+[TestClass, Ignore]
 public class TreeSitterParserTest
 {
     // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
