@@ -191,5 +191,17 @@ public class NixParserTest
                 ),
             ])
         ),
+        (
+            /*lang=nix*/"""
+                        [
+                            123
+                            "xx"
+                        ]
+                        """,
+            List([
+                Integer(123),
+                String("xx"),
+            ])
+        ),
     ];
 }
