@@ -25,6 +25,8 @@ public abstract partial record NixExpression
     public record List_(params Lst<NixExpression> Items) : NixExpression;
     
     public record Select_(NixExpression Expression, NixAttrPath AttrPath, Option<NixExpression> Default = default) : NixExpression;
+    
+    public record Apply_(NixExpression FnExpression, NixExpression ArgExpression) : NixExpression;
 
     public static NixExpression String(string text) => String(NixStringFragment.Text(text));
     

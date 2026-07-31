@@ -251,5 +251,11 @@ public class NixParserTest
                         """,
             Select(Variable("x"), new NixAttrPath(NixAttrPathSegment.Identifier("y")), Integer(42))
         ),
+        (
+            /*lang=nix*/"""
+                        toString 1312
+                        """,
+            Apply(Variable("toString"), Integer(1312))
+        ),
     ];
 }

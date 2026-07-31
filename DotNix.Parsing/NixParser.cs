@@ -41,9 +41,12 @@ public static class NixParser
         "let_attrset_expression" => MapLetAttrs(node),
         "list_expression" => MapList(node),
         "select_expression" => MapSelect(node),
+        "apply_expression" => MapApply(node),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
 
+    private static NixExpression MapApply(Node node) => NixExpression.Apply(MapNode(node.GetField("function")), MapNode(node.GetField("argument")));
+    
     private static NixExpression MapSelect(Node node) => NixExpression.Select(MapNode(node.GetField("expression")), MapAttrPath(node.GetField("attrpath")), node.TryGetField("default").Map(MapNode));
 
     private static NixExpression MapList(Node node) => NixExpression.List(toList(node.GetFields("element").Select(MapNode)));
