@@ -221,5 +221,23 @@ public class NixParserTest
                 ),
             ])
         ),
+        (
+            /*lang=nix*/"""
+                        let {
+                            x = 420;
+                            y = x;
+                        }
+                        """,
+            LetAttrs([
+                new NixBinding(
+                    new NixAttrPath([NixAttrPathSegment.Identifier("x")]),
+                    Integer(420)
+                ),
+                new NixBinding(
+                    new NixAttrPath([NixAttrPathSegment.Identifier("y")]),
+                    Variable("x")
+                ),
+            ])
+        ),
     ];
 }

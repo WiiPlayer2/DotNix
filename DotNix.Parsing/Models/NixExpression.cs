@@ -20,6 +20,8 @@ public abstract partial record NixExpression
     
     public record RecAttrs_(params Lst<NixBinding> Bindings) : NixExpression;
     
+    public record LetAttrs_(params Lst<NixBinding> Bindings) : NixExpression;
+    
     public record List_(params Lst<NixExpression> Items) : NixExpression;
 
     public static NixExpression String(string text) => String(NixStringFragment.Text(text));
