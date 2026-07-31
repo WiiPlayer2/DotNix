@@ -239,5 +239,17 @@ public class NixParserTest
                 ),
             ])
         ),
+        (
+            /*lang=nix*/"""
+                        x.y
+                        """,
+            Select(Variable("x"), new NixAttrPath(NixAttrPathSegment.Identifier("y")))
+        ),
+        (
+            /*lang=nix*/"""
+                        x.y or 42
+                        """,
+            Select(Variable("x"), new NixAttrPath(NixAttrPathSegment.Identifier("y")), Integer(42))
+        ),
     ];
 }
