@@ -164,5 +164,32 @@ public class NixParserTest
                 ),
             ])
         ),
+        (
+            /*lang=nix*/"""
+                        {
+                            x.y.z = 420;
+                            "o-m-e-g-a" = "69";
+                            ${null} = false;
+                        }
+                        """,
+            Attrs([
+                new NixBinding(
+                    new NixAttrPath([
+                        NixAttrPathSegment.Identifier("x"),
+                        NixAttrPathSegment.Identifier("y"),
+                        NixAttrPathSegment.Identifier("z"),
+                    ]),
+                    Integer(420)
+                ),
+                new NixBinding(
+                    new NixAttrPath([NixAttrPathSegment.Interpolation(String("o-m-e-g-a"))]),
+                    String("69")
+                ),
+                new NixBinding(
+                    new NixAttrPath([NixAttrPathSegment.Interpolation(Variable("null"))]),
+                    Variable("false")
+                ),
+            ])
+        ),
     ];
 }

@@ -46,7 +46,15 @@ public static class NixParser
     
     private static NixBinding MapBinding(Node node) => new(MapAttrPath(node.GetField("attrpath")), MapNode(node.GetField("expression")));
 
-    private static NixAttrPath MapAttrPath(Node node) => new(NixAttrPathSegment.Identifier(node.Text));
+    private static NixAttrPath MapAttrPath(Node node) => new(toList(node.GetFields("attr").Select(MapAttrPathSegment)));
+
+    private static NixAttrPathSegment MapAttrPathSegment(Node node) => node.Type switch
+    {
+        "identifier" => NixAttrPathSegment.Identifier(node.Text),
+        "string_expression" => NixAttrPathSegment.Interpolation(MapStringExpression(node)),
+        "interpolation" => NixAttrPathSegment.Interpolation(MapNode(node.GetField("expression"))),
+        _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
+    };
     
     private static NixExpression MapStringExpression(Node node) => NixExpression.String(
         toList(CleanupFragments(
