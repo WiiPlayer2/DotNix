@@ -37,6 +37,7 @@ public static class NixParser
         "path_expression" => MapPathExpression(node),
         "parenthesized_expression" => MapNode(node.GetField("expression")),
         "attrset_expression" => MapAttrs(node),
+        "rec_attrset_expression" => MapRecAttrs(node),
         "list_expression" => MapList(node),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
@@ -44,6 +45,8 @@ public static class NixParser
     private static NixExpression MapList(Node node) => NixExpression.List(toList(node.GetFields("element").Select(MapNode)));
 
     private static NixExpression MapAttrs(Node node) => NixExpression.Attrs(MapBindingSet(node.FirstNamedChild!));
+    
+    private static NixExpression MapRecAttrs(Node node) => NixExpression.RecAttrs(MapBindingSet(node.FirstNamedChild!));
 
     private static Lst<NixBinding> MapBindingSet(Node node) => toList(node.GetFields("binding").Select(MapBinding));
     

@@ -203,5 +203,23 @@ public class NixParserTest
                 String("xx"),
             ])
         ),
+        (
+            /*lang=nix*/"""
+                        rec {
+                            x = 420;
+                            y = x;
+                        }
+                        """,
+            RecAttrs([
+                new NixBinding(
+                    new NixAttrPath([NixAttrPathSegment.Identifier("x")]),
+                    Integer(420)
+                ),
+                new NixBinding(
+                    new NixAttrPath([NixAttrPathSegment.Identifier("y")]),
+                    Variable("x")
+                ),
+            ])
+        ),
     ];
 }
