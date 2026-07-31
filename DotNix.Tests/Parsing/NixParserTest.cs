@@ -269,5 +269,11 @@ public class NixParserTest
                         """,
             Unary(NixUnaryOperator.Not, Variable("false"))
         ),
+        (
+            /*lang=nix*/"""
+                        1 + 2
+                        """,
+            Binary(NixBinaryOperator.Plus, Integer(1), Integer(2))
+        ),
     ];
 }
