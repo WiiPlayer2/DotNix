@@ -33,6 +33,8 @@ public abstract partial record NixExpression
     public record Unary_(NixUnaryOperator Operator, NixExpression Expression) : NixExpression;
     
     public record Binary_(NixBinaryOperator Operator, NixExpression LeftExpression, NixExpression RightExpression) : NixExpression;
+    
+    public record If_(NixExpression Condition, NixExpression Then, NixExpression Else) : NixExpression;
 
     public static NixExpression String(string text) => String(NixStringFragment.Text(text));
     

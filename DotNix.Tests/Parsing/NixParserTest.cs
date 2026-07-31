@@ -275,5 +275,11 @@ public class NixParserTest
                         """,
             Binary(NixBinaryOperator.Plus, Integer(1), Integer(2))
         ),
+        (
+            /*lang=nix*/"""
+                        if x then y else z
+                        """,
+            If(Variable("x"), Variable("y"), Variable("z"))
+        ),
     ];
 }

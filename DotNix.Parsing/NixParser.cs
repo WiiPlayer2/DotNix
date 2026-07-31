@@ -45,8 +45,11 @@ public static class NixParser
         "has_attr_expression" => MapHasAttr(node),
         "unary_expression" => MapUnary(node),
         "binary_expression" => MapBinary(node),
+        "if_expression" => MapIf(node),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
+
+    private static NixExpression MapIf(Node node) => NixExpression.If(MapNode(node.GetField("condition")), MapNode(node.GetField("consequence")), MapNode(node.GetField("alternative")));
 
     private static NixExpression MapBinary(Node node) => NixExpression.Binary(node.GetField("operator").Text switch
     {
