@@ -263,5 +263,11 @@ public class NixParserTest
                         """,
             HasAttr(Variable("x"), new NixAttrPath(NixAttrPathSegment.Identifier("y")))
         ),
+        (
+            /*lang=nix*/"""
+                        !false
+                        """,
+            Unary(NixUnaryOperator.Not, Variable("false"))
+        ),
     ];
 }

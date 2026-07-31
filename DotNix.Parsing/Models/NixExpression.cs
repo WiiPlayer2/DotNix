@@ -30,6 +30,8 @@ public abstract partial record NixExpression
 
     public record HasAttr_(NixExpression Expression, NixAttrPath AttrPath) : NixExpression;
 
+    public record Unary_(NixUnaryOperator Operator, NixExpression Expression) : NixExpression;
+
     public static NixExpression String(string text) => String(NixStringFragment.Text(text));
     
     public static NixExpression Path(string text) => Path(NixStringFragment.Text(text));

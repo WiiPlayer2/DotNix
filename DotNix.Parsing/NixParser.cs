@@ -43,8 +43,16 @@ public static class NixParser
         "select_expression" => MapSelect(node),
         "apply_expression" => MapApply(node),
         "has_attr_expression" => MapHasAttr(node),
+        "unary_expression" => MapUnary(node),
         _ => throw new NotImplementedException($"Type {node.Type} not implemented"),
     };
+
+    private static NixExpression MapUnary(Node node) => NixExpression.Unary(node.GetField("operator").Text switch
+    {
+        "!" => NixUnaryOperator.Not,
+        "-" => NixUnaryOperator.Negate,
+        _ => throw new NotImplementedException($"Unary operator {node.GetField("operator").Text} not implemented"),
+    }, MapNode(node.GetField("argument")));
 
     private static NixExpression MapHasAttr(Node node) => NixExpression.HasAttr(MapNode(node.GetField("expression")), MapAttrPath(node.GetField("attrpath")));
 
